@@ -68,11 +68,7 @@ function App() {
   }
 
   return (
-    <div style={{ fontFamily: "Arial, sans-serif" }}>
-      <header style={{ background: "#222", color: "white", padding: "10px 16px", marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: "1.4rem" }}>AssetShare MVP</h1>
-      </header>
-
+    <div>
       {content}
     </div>
   );

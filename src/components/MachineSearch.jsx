@@ -81,26 +81,128 @@ export default function MachineSearch({ token }) {
     }
   }
 
+  const inputGroupStyle = {
+    marginBottom: "1.5rem",
+  };
+
+  const labelStyle = {
+    display: "block",
+    marginBottom: "0.5rem",
+    fontWeight: "600",
+    color: "#124e66",
+    fontSize: "0.9rem",
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "0.75rem",
+    borderRadius: "8px",
+    border: "2px solid rgba(73, 163, 166, 0.3)",
+    fontSize: "1rem",
+    transition: "all 0.3s ease",
+    boxSizing: "border-box",
+    background: "rgba(255, 255, 255, 0.8)",
+    color: "#08182b",
+  };
+
+  const buttonStyle = {
+    padding: "0.75rem 1.5rem",
+    borderRadius: "8px",
+    border: "none",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: loading ? "not-allowed" : "pointer",
+    transition: "all 0.3s ease",
+    background: loading
+      ? "#49a3a6"
+      : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#9adbd6",
+    boxShadow: loading
+      ? "none"
+      : "0 4px 15px rgba(31, 111, 120, 0.4)",
+    marginRight: "0.75rem",
+    marginBottom: "0.75rem",
+    opacity: loading ? 0.6 : 1,
+  };
+
+  const secondaryButtonStyle = {
+    ...buttonStyle,
+    background: loading ? "#49a3a6" : "#49a3a6",
+    color: loading ? "#9adbd6" : "#08182b",
+    boxShadow: loading ? "none" : "0 4px 15px rgba(73, 163, 166, 0.3)",
+  };
+
+  const errorStyle = {
+    color: "#08182b",
+    background: "rgba(255, 200, 200, 0.8)",
+    padding: "1rem",
+    borderRadius: "8px",
+    marginTop: "1rem",
+    border: "1px solid rgba(255, 150, 150, 0.5)",
+  };
+
+  const machineCardStyle = {
+    background: "rgba(255, 255, 255, 0.7)",
+    padding: "1.25rem",
+    marginBottom: "1rem",
+    borderRadius: "12px",
+    border: "1px solid rgba(73, 163, 166, 0.3)",
+    transition: "all 0.2s ease",
+  };
+
+  const machineNameStyle = {
+    fontSize: "1.25rem",
+    fontWeight: "700",
+    color: "#08182b",
+    marginBottom: "0.75rem",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+  };
+
+  const machineInfoStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gap: "0.75rem",
+    marginTop: "0.75rem",
+  };
+
+  const infoItemStyle = {
+    fontSize: "0.9rem",
+    color: "#124e66",
+  };
+
+  const infoLabelStyle = {
+    fontWeight: "600",
+    color: "#08182b",
+    marginRight: "0.5rem",
+  };
+
   return (
-    <div style={{ marginTop: 20, padding: 20, border: "1px solid #ddd", borderRadius: 8 }}>
-      <h3>Search Machines</h3>
-      
-      <div style={{ marginBottom: 15 }}>
-        <label style={{ display: "block", marginBottom: 5 }}>
-          Location:
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>📍 Location</label>
           <input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter location (e.g., Copenhagen)"
-            style={{ marginLeft: 10, padding: 5, width: 200 }}
+            placeholder="e.g., Copenhagen"
+            style={inputStyle}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#49a3a6";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(73, 163, 166, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "rgba(73, 163, 166, 0.3)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
           />
-        </label>
-      </div>
+        </div>
 
-      <div style={{ marginBottom: 15 }}>
-        <label style={{ display: "block", marginBottom: 5 }}>
-          Max Price:
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>💰 Max Price</label>
           <input
             type="number"
             value={maxPrice}
@@ -108,58 +210,98 @@ export default function MachineSearch({ token }) {
             placeholder="Enter max price"
             min="0"
             step="0.01"
-            style={{ marginLeft: 10, padding: 5, width: 200 }}
+            style={inputStyle}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#49a3a6";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(73, 163, 166, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "rgba(73, 163, 166, 0.3)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
           />
-        </label>
+        </div>
       </div>
 
-      <div style={{ marginBottom: 15 }}>
+      <div style={{ marginBottom: "1rem", display: "flex", flexWrap: "wrap" }}>
         <button
           onClick={searchMachines}
           disabled={loading}
-          style={{ padding: 8, marginRight: 10 }}
+          style={buttonStyle}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = loading
+                ? "none"
+                : "0 4px 15px rgba(31, 111, 120, 0.4)";
+            }}
         >
-          {loading ? "Searching..." : "Search"}
+          {loading ? "Searching..." : "🔍 Search"}
         </button>
         <button
           onClick={loadAllMachines}
           disabled={loading}
-          style={{ padding: 8 }}
+          style={secondaryButtonStyle}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(73, 163, 166, 0.5)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = loading
+                ? "none"
+                : "0 4px 15px rgba(73, 163, 166, 0.3)";
+            }}
         >
-          {loading ? "Loading..." : "Load All Machines"}
+          {loading ? "Loading..." : "📋 Load All Machines"}
         </button>
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <div style={errorStyle}>{error}</div>}
 
-      <div style={{ marginTop: 20 }}>
-        <h4>Results ({machines.length}):</h4>
+      <div style={{ marginTop: "2rem" }}>
+        <h3 style={{ fontSize: "1.25rem", color: "#08182b", marginBottom: "1rem" }}>
+          Results <span style={{ color: "#1f6f78", fontWeight: "600" }}>({machines.length})</span>
+        </h3>
         {machines.length === 0 ? (
-          <p>No machines found</p>
+          <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
+            No machines found. Try adjusting your search criteria.
+          </p>
         ) : (
-          <ul style={{ listStyle: "none", padding: 0 }}>
+          <div>
             {machines.map((machine) => (
-              <li
-                key={machine.id}
-                style={{
-                  padding: 10,
-                  marginBottom: 10,
-                  border: "1px solid #ccc",
-                  borderRadius: 4,
-                }}
-              >
-                <strong>{machine.name}</strong>
-                <br />
-                Category: {machine.category || "N/A"}
-                <br />
-                Location: {machine.location || "N/A"}
-                <br />
-                Price: {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
-                <br />
-                Owner ID: {machine.ownerId || "N/A"}
-              </li>
+              <div key={machine.id} style={machineCardStyle}>
+                <div style={machineNameStyle}>{machine.name}</div>
+                <div style={machineInfoStyle}>
+                  <div style={infoItemStyle}>
+                    <span style={infoLabelStyle}>Category:</span>
+                    {machine.category || "N/A"}
+                  </div>
+                  <div style={infoItemStyle}>
+                    <span style={infoLabelStyle}>📍 Location:</span>
+                    {machine.location || "N/A"}
+                  </div>
+                  <div style={infoItemStyle}>
+                    <span style={infoLabelStyle}>💰 Price:</span>
+                    {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
+                  </div>
+                  {machine.ownerId && (
+                    <div style={infoItemStyle}>
+                      <span style={infoLabelStyle}>👤 Owner ID:</span>
+                      {machine.ownerId}
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>

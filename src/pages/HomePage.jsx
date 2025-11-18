@@ -1,4 +1,5 @@
 import { useState } from "react";
+import MachineSearch from "../components/MachineSearch";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -62,6 +63,10 @@ export default function HomePage({ token, userEmail, onLogout }) {
           <li key={u.id}>{u.name} ({u.email})</li>
         ))}
       </ul>
+
+      <hr style={{ margin: "30px 0" }} />
+
+      <MachineSearch token={token} />
     </div>
   );
 }

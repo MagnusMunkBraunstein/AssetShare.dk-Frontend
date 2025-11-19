@@ -28,10 +28,9 @@ export default function HomePage({ token, userEmail, onLogout }) {
 
       const data = await res.json();
       setUsers(data);
-      
-      // Find current user's name
+
       if (userEmail) {
-        const currentUser = data.find(u => u.email === userEmail);
+        const currentUser = data.find((u) => u.email === userEmail);
         if (currentUser) {
           setUserName(currentUser.name);
         }
@@ -44,11 +43,10 @@ export default function HomePage({ token, userEmail, onLogout }) {
     }
   }
 
-  // Load current user's name when component mounts
   useEffect(() => {
     async function loadCurrentUserName() {
       if (!userEmail || !token) return;
-      
+
       try {
         const res = await fetch(`${API_BASE}/users`, {
           headers: {
@@ -59,7 +57,7 @@ export default function HomePage({ token, userEmail, onLogout }) {
 
         if (res.ok) {
           const data = await res.json();
-          const currentUser = data.find(u => u.email === userEmail);
+          const currentUser = data.find((u) => u.email === userEmail);
           if (currentUser) {
             setUserName(currentUser.name);
           }
@@ -181,7 +179,10 @@ export default function HomePage({ token, userEmail, onLogout }) {
           <div>
             <h1 style={titleStyle}>Welcome to AssetShare</h1>
             <p style={subtitleStyle}>
-              Logged in as <strong style={{ color: "#1f6f78" }}>{userName || userEmail}</strong>
+              Logged in as{" "}
+              <strong style={{ color: "#1f6f78" }}>
+                {userName || userEmail}
+              </strong>
             </p>
           </div>
           <button
@@ -189,11 +190,13 @@ export default function HomePage({ token, userEmail, onLogout }) {
             style={logoutButtonStyle}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 6px 20px rgba(18, 78, 102, 0.6)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 20px rgba(18, 78, 102, 0.6)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 15px rgba(18, 78, 102, 0.4)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 15px rgba(18, 78, 102, 0.4)";
             }}
           >
             Log Out
@@ -202,13 +205,34 @@ export default function HomePage({ token, userEmail, onLogout }) {
 
         {/* Users Section */}
         <div style={cardStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1.5rem",
+              flexWrap: "wrap",
+              gap: "1rem",
+            }}
+          >
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#08182b" }}>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "1.5rem",
+                  color: "#08182b",
+                }}
+              >
                 Users
                 <span style={badgeStyle}>Protected</span>
               </h2>
-              <p style={{ margin: "0.5rem 0 0 0", color: "#124e66", fontSize: "0.9rem" }}>
+              <p
+                style={{
+                  margin: "0.5rem 0 0 0",
+                  color: "#124e66",
+                  fontSize: "0.9rem",
+                }}
+              >
                 View all registered users in the system
               </p>
             </div>
@@ -219,12 +243,14 @@ export default function HomePage({ token, userEmail, onLogout }) {
               onMouseEnter={(e) => {
                 if (!loading) {
                   e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(73, 163, 166, 0.5)";
+                  e.currentTarget.style.boxShadow =
+                    "0 6px 20px rgba(73, 163, 166, 0.5)";
                 }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 15px rgba(73, 163, 166, 0.3)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 15px rgba(73, 163, 166, 0.3)";
               }}
             >
               {loading ? "Loading..." : "Load Users"}
@@ -235,20 +261,38 @@ export default function HomePage({ token, userEmail, onLogout }) {
 
           {users.length > 0 && (
             <div style={{ marginTop: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.1rem", color: "#08182b", marginBottom: "1rem" }}>
+              <h3
+                style={{
+                  fontSize: "1.1rem",
+                  color: "#08182b",
+                  marginBottom: "1rem",
+                }}
+              >
                 Found {users.length} user{users.length !== 1 ? "s" : ""}
               </h3>
               <div>
                 {users.map((u) => (
                   <div key={u.id} style={userCardStyle}>
-                    <div style={{ fontWeight: "600", color: "#08182b", marginBottom: "0.25rem" }}>
+                    <div
+                      style={{
+                        fontWeight: "600",
+                        color: "#08182b",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
                       {u.name}
                     </div>
                     <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
                       📧 {u.email}
                     </div>
                     {u.role && (
-                      <div style={{ fontSize: "0.85rem", color: "#1f6f78", marginTop: "0.25rem" }}>
+                      <div
+                        style={{
+                          fontSize: "0.85rem",
+                          color: "#1f6f78",
+                          marginTop: "0.25rem",
+                        }}
+                      >
                         Role: {u.role}
                       </div>
                     )}
@@ -259,7 +303,14 @@ export default function HomePage({ token, userEmail, onLogout }) {
           )}
 
           {users.length === 0 && !loading && !msg && (
-            <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
+            <p
+              style={{
+                color: "#124e66",
+                fontStyle: "italic",
+                textAlign: "center",
+                padding: "2rem",
+              }}
+            >
               Click "Load Users" to view all registered users
             </p>
           )}
@@ -267,12 +318,26 @@ export default function HomePage({ token, userEmail, onLogout }) {
 
         {/* Machine Search Section */}
         <div style={cardStyle}>
-          <h2 style={{ margin: "0 0 1rem 0", fontSize: "1.5rem", color: "#08182b" }}>
+          <h2
+            style={{
+              margin: "0 0 1rem 0",
+              fontSize: "1.5rem",
+              color: "#08182b",
+            }}
+          >
             Machine Search
           </h2>
-          <p style={{ margin: "0 0 1.5rem 0", color: "#124e66", fontSize: "0.9rem" }}>
-            Search and browse available machines by location and price
+          <p
+            style={{
+              margin: "0 0 1.5rem 0",
+              color: "#124e66",
+              fontSize: "0.9rem",
+            }}
+          >
+            Search and browse available machines by location and price. Klik på
+            en maskine for at se detaljer og kalender direkte i kortet.
           </p>
+
           <MachineSearch token={token} />
         </div>
       </div>

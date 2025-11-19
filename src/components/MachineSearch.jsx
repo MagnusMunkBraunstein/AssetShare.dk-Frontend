@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BookingRequest from "./BookingRequest";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -8,6 +9,8 @@ export default function MachineSearch({ token }) {
   const [maxPrice, setMaxPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedMachine, setSelectedMachine] = useState(null);
+  const [bookingSuccess, setBookingSuccess] = useState(null);
 
   async function searchMachines() {
     setLoading(true);
@@ -179,8 +182,55 @@ export default function MachineSearch({ token }) {
     marginRight: "0.5rem",
   };
 
+  const bookButtonStyle = {
+    padding: "0.5rem 1rem",
+    borderRadius: "8px",
+    border: "none",
+    fontSize: "0.9rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#9adbd6",
+    boxShadow: "0 4px 15px rgba(31, 111, 120, 0.4)",
+    marginTop: "0.75rem",
+  };
+
+  const successMessageStyle = {
+    background: "rgba(100, 200, 100, 0.8)",
+    color: "#08182b",
+    padding: "1rem",
+    borderRadius: "8px",
+    marginBottom: "1rem",
+    border: "1px solid rgba(100, 200, 100, 0.5)",
+  };
+
   return (
     <div>
+      {selectedMachine && (
+        <BookingRequest
+          machine={selectedMachine}
+          token={token}
+          onClose={() => {
+            setSelectedMachine(null);
+            setBookingSuccess(null);
+          }}
+          onBookingSuccess={(data) => {
+            setBookingSuccess(data);
+            setSelectedMachine(null);
+            // Optionally reload machines
+            setTimeout(() => {
+              setBookingSuccess(null);
+            }, 5000);
+          }}
+        />
+      )}
+
+      {bookingSuccess && (
+        <div style={successMessageStyle}>
+          ✅ {bookingSuccess.message}
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
         <div style={inputGroupStyle}>
           <label style={labelStyle}>📍 Location</label>
@@ -299,6 +349,22 @@ export default function MachineSearch({ token }) {
                     </div>
                   )}
                 </div>
+                {token && (
+                  <button
+                    onClick={() => setSelectedMachine(machine)}
+                    style={bookButtonStyle}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(31, 111, 120, 0.4)";
+                    }}
+                  >
+                    📅 Book This Machine
+                  </button>
+                )}
               </div>
             ))}
           </div>

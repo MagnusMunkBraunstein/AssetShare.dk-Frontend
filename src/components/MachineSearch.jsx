@@ -1,40 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function MachineSearch({ token }) {
+export default function MachineSearch({ token, onSelectMachine }) {
   const [machines, setMachines] = useState([]);
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
 
-  async function searchMachines() {
+  async function loadMachines() {
     setLoading(true);
-    setError("");
-    
+    setMsg("");
+
     try {
       const params = new URLSearchParams();
-      if (location.trim()) {
-        params.append("location", location.trim());
-      }
-      if (maxPrice.trim()) {
-        params.append("maxPrice", maxPrice.trim());
-      }
+      if (location) params.append("location", location);
+      if (maxPrice) params.append("maxPrice", maxPrice);
 
-      const url = `${API_BASE}/machines${params.toString() ? `?${params.toString()}` : ""}`;
-      
-      const res = await fetch(url, {
+      const res = await fetch(`${API_BASE}/machines?` + params.toString(), {
         headers: {
           "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
+          // ingen Authorization her → ikke-logget bruger må gerne se katalog
         },
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        setError("Failed to search machines: " + text);
-        setMachines([]);
+        const t = await res.text();
+        setMsg("Failed to load machines: " + t);
         return;
       }
 
@@ -42,269 +35,163 @@ export default function MachineSearch({ token }) {
       setMachines(data);
     } catch (err) {
       console.error(err);
-      setError("Error searching machines: " + err.message);
-      setMachines([]);
+      setMsg("Error loading machines");
     } finally {
       setLoading(false);
     }
   }
 
-  async function loadAllMachines() {
-    setLocation("");
-    setMaxPrice("");
-    setLoading(true);
-    setError("");
-    
-    try {
-      const res = await fetch(`${API_BASE}/machines`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
+  // Evt. automatisk load ved mount
+  useEffect(() => {
+    loadMachines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      if (!res.ok) {
-        const text = await res.text();
-        setError("Failed to load machines: " + text);
-        setMachines([]);
-        return;
-      }
-
-      const data = await res.json();
-      setMachines(data);
-    } catch (err) {
-      console.error(err);
-      setError("Error loading machines: " + err.message);
-      setMachines([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const inputGroupStyle = {
-    marginBottom: "1.5rem",
-  };
-
-  const labelStyle = {
-    display: "block",
-    marginBottom: "0.5rem",
-    fontWeight: "600",
-    color: "#124e66",
-    fontSize: "0.9rem",
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "0.75rem",
-    borderRadius: "8px",
-    border: "2px solid rgba(73, 163, 166, 0.3)",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    boxSizing: "border-box",
-    background: "rgba(255, 255, 255, 0.8)",
-    color: "#08182b",
-  };
-
-  const buttonStyle = {
-    padding: "0.75rem 1.5rem",
-    borderRadius: "8px",
-    border: "none",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: loading ? "not-allowed" : "pointer",
-    transition: "all 0.3s ease",
-    background: loading
-      ? "#49a3a6"
-      : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-    color: "#9adbd6",
-    boxShadow: loading
-      ? "none"
-      : "0 4px 15px rgba(31, 111, 120, 0.4)",
-    marginRight: "0.75rem",
-    marginBottom: "0.75rem",
-    opacity: loading ? 0.6 : 1,
-  };
-
-  const secondaryButtonStyle = {
-    ...buttonStyle,
-    background: loading ? "#49a3a6" : "#49a3a6",
-    color: loading ? "#9adbd6" : "#08182b",
-    boxShadow: loading ? "none" : "0 4px 15px rgba(73, 163, 166, 0.3)",
-  };
-
-  const errorStyle = {
-    color: "#08182b",
-    background: "rgba(255, 200, 200, 0.8)",
+  const cardStyle = {
+    background: "rgba(255, 255, 255, 0.85)",
     padding: "1rem",
-    borderRadius: "8px",
-    marginTop: "1rem",
-    border: "1px solid rgba(255, 150, 150, 0.5)",
-  };
-
-  const machineCardStyle = {
-    background: "rgba(255, 255, 255, 0.7)",
-    padding: "1.25rem",
-    marginBottom: "1rem",
     borderRadius: "12px",
+    marginBottom: "0.75rem",
     border: "1px solid rgba(73, 163, 166, 0.3)",
+    cursor: "pointer",
     transition: "all 0.2s ease",
   };
 
-  const machineNameStyle = {
-    fontSize: "1.25rem",
-    fontWeight: "700",
-    color: "#08182b",
-    marginBottom: "0.75rem",
-    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
+  const cardHoverStyle = {
+    boxShadow: "0 6px 18px rgba(8, 24, 43, 0.2)",
+    transform: "translateY(-2px)",
   };
 
-  const machineInfoStyle = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "0.75rem",
-    marginTop: "0.75rem",
-  };
-
-  const infoItemStyle = {
-    fontSize: "0.9rem",
-    color: "#124e66",
-  };
-
-  const infoLabelStyle = {
-    fontWeight: "600",
-    color: "#08182b",
+  const inputStyle = {
+    padding: "0.5rem 0.75rem",
+    borderRadius: "8px",
+    border: "1px solid rgba(73, 163, 166, 0.6)",
     marginRight: "0.5rem",
+    minWidth: "140px",
+  };
+
+  const buttonStyle = {
+    padding: "0.6rem 1.2rem",
+    borderRadius: "8px",
+    border: "none",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#9adbd6",
+    boxShadow: "0 4px 12px rgba(31, 111, 120, 0.4)",
+    transition: "all 0.3s ease",
   };
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>📍 Location</label>
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g., Copenhagen"
-            style={inputStyle}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#49a3a6";
-                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(73, 163, 166, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(73, 163, 166, 0.3)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>💰 Max Price</label>
-          <input
-            type="number"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            placeholder="Enter max price"
-            min="0"
-            step="0.01"
-            style={inputStyle}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#49a3a6";
-                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(73, 163, 166, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(73, 163, 166, 0.3)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-          />
-        </div>
-      </div>
-
-      <div style={{ marginBottom: "1rem", display: "flex", flexWrap: "wrap" }}>
+      {/* Search form */}
+      <div
+        style={{
+          marginBottom: "1.5rem",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem",
+          alignItems: "center",
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Location..."
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          style={inputStyle}
+        />
+        <input
+          type="number"
+          placeholder="Max price..."
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          style={inputStyle}
+        />
         <button
-          onClick={searchMachines}
+          onClick={loadMachines}
           disabled={loading}
           style={buttonStyle}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = loading
-                ? "none"
-                : "0 4px 15px rgba(31, 111, 120, 0.4)";
-            }}
+          onMouseEnter={(e) => {
+            if (!loading) {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 18px rgba(31, 111, 120, 0.6)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow =
+              "0 4px 12px rgba(31, 111, 120, 0.4)";
+          }}
         >
-          {loading ? "Searching..." : "🔍 Search"}
-        </button>
-        <button
-          onClick={loadAllMachines}
-          disabled={loading}
-          style={secondaryButtonStyle}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(73, 163, 166, 0.5)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = loading
-                ? "none"
-                : "0 4px 15px rgba(73, 163, 166, 0.3)";
-            }}
-        >
-          {loading ? "Loading..." : "📋 Load All Machines"}
+          {loading ? "Searching..." : "Search"}
         </button>
       </div>
 
-      {error && <div style={errorStyle}>{error}</div>}
+      {msg && (
+        <div
+          style={{
+            color: "#08182b",
+            background: "rgba(255, 200, 200, 0.8)",
+            padding: "0.75rem",
+            borderRadius: "8px",
+            marginBottom: "1rem",
+            border: "1px solid rgba(255, 150, 150, 0.5)",
+          }}
+        >
+          {msg}
+        </div>
+      )}
 
-      <div style={{ marginTop: "2rem" }}>
-        <h3 style={{ fontSize: "1.25rem", color: "#08182b", marginBottom: "1rem" }}>
-          Results <span style={{ color: "#1f6f78", fontWeight: "600" }}>({machines.length})</span>
-        </h3>
-        {machines.length === 0 ? (
-          <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
-            No machines found. Try adjusting your search criteria.
-          </p>
-        ) : (
-          <div>
-            {machines.map((machine) => (
-              <div key={machine.id} style={machineCardStyle}>
-                <div style={machineNameStyle}>{machine.name}</div>
-                <div style={machineInfoStyle}>
-                  <div style={infoItemStyle}>
-                    <span style={infoLabelStyle}>Category:</span>
-                    {machine.category || "N/A"}
-                  </div>
-                  <div style={infoItemStyle}>
-                    <span style={infoLabelStyle}>📍 Location:</span>
-                    {machine.location || "N/A"}
-                  </div>
-                  <div style={infoItemStyle}>
-                    <span style={infoLabelStyle}>💰 Price:</span>
-                    {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
-                  </div>
-                  {machine.ownerId && (
-                    <div style={infoItemStyle}>
-                      <span style={infoLabelStyle}>👤 Owner ID:</span>
-                      {machine.ownerId}
-                    </div>
-                  )}
-                </div>
+      {/* Machine results */}
+      {machines.length === 0 && !loading && !msg && (
+        <p style={{ color: "#124e66", fontStyle: "italic" }}>
+          No machines found. Try adjusting your search.
+        </p>
+      )}
+
+      <div>
+        {machines.map((m) => (
+          <div
+            key={m.id}
+            style={cardStyle}
+            onClick={() => onSelectMachine && onSelectMachine(m.id)}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, cardHoverStyle);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <div
+              style={{
+                fontWeight: "600",
+                color: "#08182b",
+                marginBottom: "0.25rem",
+              }}
+            >
+              {m.name}
+            </div>
+            <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
+              📍 {m.location} | 💰 {m.price} kr./dag
+            </div>
+            {m.category && (
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#1f6f78",
+                  marginTop: "0.25rem",
+                }}
+              >
+                Kategori: {m.category}
               </div>
-            ))}
+            )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
 }
-

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import MachineSearch from "../components/MachineSearch";
+import RentalProviderRegistration from "../components/RentalProviderRegistration";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -263,6 +264,18 @@ export default function HomePage({ token, userEmail, onLogout }) {
               Click "Load Users" to view all registered users
             </p>
           )}
+        </div>
+
+        {/* Rental Provider Registration Section */}
+        <div style={cardStyle}>
+          <RentalProviderRegistration
+            token={token}
+            onRegistrationSuccess={(userData) => {
+              console.log("User registered as rental provider:", userData);
+              // Optionally reload users to show updated role
+              loadUsers();
+            }}
+          />
         </div>
 
         {/* Machine Search Section */}

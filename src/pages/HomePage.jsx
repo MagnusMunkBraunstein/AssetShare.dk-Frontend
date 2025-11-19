@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import MachineSearch from "../components/MachineSearch";
 import RentalProviderRegistration from "../components/RentalProviderRegistration";
+import AddMachine from "../components/AddMachine";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -9,6 +10,7 @@ export default function HomePage({ token, userEmail, onLogout }) {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState(null);
 
   async function loadUsers() {
     setMsg("");
@@ -30,11 +32,12 @@ export default function HomePage({ token, userEmail, onLogout }) {
       const data = await res.json();
       setUsers(data);
       
-      // Find current user's name
+      // Find current user's name and role
       if (userEmail) {
         const currentUser = data.find(u => u.email === userEmail);
         if (currentUser) {
           setUserName(currentUser.name);
+          setUserRole(currentUser.role);
         }
       }
     } catch (err) {
@@ -63,6 +66,7 @@ export default function HomePage({ token, userEmail, onLogout }) {
           const currentUser = data.find(u => u.email === userEmail);
           if (currentUser) {
             setUserName(currentUser.name);
+            setUserRole(currentUser.role);
           }
         }
       } catch (err) {
@@ -270,13 +274,45 @@ export default function HomePage({ token, userEmail, onLogout }) {
         <div style={cardStyle}>
           <RentalProviderRegistration
             token={token}
-            onRegistrationSuccess={(userData) => {
+            onRegistrationSuccess={async (userData) => {
               console.log("User registered as rental provider:", userData);
-              // Optionally reload users to show updated role
-              loadUsers();
+              // Reload users to show updated role
+              await loadUsers();
+              // Also reload current user info to update role immediately
+              if (userEmail && token) {
+                try {
+                  const res = await fetch(`${API_BASE}/users`, {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                  });
+                  if (res.ok) {
+                    const data = await res.json();
+                    const currentUser = data.find(u => u.email === userEmail);
+                    if (currentUser) {
+                      setUserRole(currentUser.role);
+                    }
+                  }
+                } catch (err) {
+                  console.error("Error reloading user role:", err);
+                }
+              }
             }}
           />
         </div>
+
+        {/* Add Machine Section - Only show for BOTH, UDLEJER, or ADMIN */}
+        {(userRole === "BOTH" || userRole === "UDLEJER" || userRole === "ADMIN") && (
+          <div style={cardStyle}>
+            <AddMachine
+              token={token}
+              onMachineAdded={(machineData) => {
+                console.log("Machine added:", machineData);
+              }}
+            />
+          </div>
+        )}
 
         {/* Machine Search Section */}
         <div style={cardStyle}>

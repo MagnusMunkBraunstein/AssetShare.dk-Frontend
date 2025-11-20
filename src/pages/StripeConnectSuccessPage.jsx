@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 export default function StripeConnectSuccessPage() {
   // If using React Router, use navigate. Otherwise, we'll use window.location

@@ -3,6 +3,7 @@ import MachineSearch from "../components/MachineSearch";
 import RentalProviderRegistration from "../components/RentalProviderRegistration";
 import AddMachine from "../components/AddMachine";
 import MyBookings from "../components/MyBookings";
+import StripeConnect from "../components/StripeConnect";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -312,6 +313,13 @@ export default function HomePage({ token, userEmail, onLogout }) {
                 console.log("Machine added:", machineData);
               }}
             />
+          </div>
+        )}
+
+        {/* Stripe Connect Section - Only show for BOTH, UDLEJER, or ADMIN */}
+        {(userRole === "BOTH" || userRole === "UDLEJER" || userRole === "ADMIN") && (
+          <div style={cardStyle}>
+            <StripeConnect token={token} />
           </div>
         )}
 

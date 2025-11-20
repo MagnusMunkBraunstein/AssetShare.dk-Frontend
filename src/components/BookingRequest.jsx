@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { 
+  Elements, 
+  CardNumberElement, 
+  CardExpiryElement, 
+  CardCvcElement, 
+  useStripe, 
+  useElements 
+} from "@stripe/react-stripe-js";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -90,6 +97,8 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
         
         if (res.status === 403) {
           setError("Access denied. Your session may have expired. Please try logging out and logging back in.");
+        } else if (res.status === 400 && text.includes("Stripe account")) {
+          setError("This machine owner has not connected their Stripe account yet. Please contact the owner or try a different machine.");
         } else {
           setError("Failed to create booking: " + text);
         }
@@ -123,6 +132,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
     const elements = useElements();
     const [processing, setProcessing] = useState(false);
     const [paymentError, setPaymentError] = useState("");
+    const [postalCode, setPostalCode] = useState("");
 
     async function handlePayment(e) {
       e.preventDefault();
@@ -133,16 +143,32 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
       setProcessing(true);
       setPaymentError("");
 
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        setPaymentError("Card element not found");
+      // Validate postal code (4 digits for Denmark)
+      if (!postalCode || postalCode.length !== 4 || !/^\d{4}$/.test(postalCode)) {
+        setPaymentError("Please enter a valid 4-digit postal code");
+        setProcessing(false);
+        return;
+      }
+
+      const cardNumberElement = elements.getElement(CardNumberElement);
+      const cardExpiryElement = elements.getElement(CardExpiryElement);
+      const cardCvcElement = elements.getElement(CardCvcElement);
+
+      if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
+        setPaymentError("Card elements not found");
         setProcessing(false);
         return;
       }
 
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
-          card: cardElement,
+          card: cardNumberElement,
+          billing_details: {
+            address: {
+              postal_code: postalCode,
+              country: "DK",
+            },
+          },
         },
       });
 
@@ -163,7 +189,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
       }
     }
 
-    const cardElementOptions = {
+    const elementOptions = {
       style: {
         base: {
           fontSize: "16px",
@@ -181,7 +207,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
     return (
       <form onSubmit={handlePayment}>
         <div style={{ marginBottom: "1rem" }}>
-          <label style={labelStyle}>Card Details</label>
+          <label style={labelStyle}>Card Number</label>
           <div
             style={{
               padding: "0.75rem",
@@ -190,8 +216,71 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
               background: "rgba(255, 255, 255, 0.8)",
             }}
           >
-            <CardElement options={cardElementOptions} />
+            <CardNumberElement options={elementOptions} />
           </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+          <div>
+            <label style={labelStyle}>Expiry Date</label>
+            <div
+              style={{
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "2px solid rgba(73, 163, 166, 0.3)",
+                background: "rgba(255, 255, 255, 0.8)",
+              }}
+            >
+              <CardExpiryElement options={elementOptions} />
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>CVC</label>
+            <div
+              style={{
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "2px solid rgba(73, 163, 166, 0.3)",
+                background: "rgba(255, 255, 255, 0.8)",
+              }}
+            >
+              <CardCvcElement options={elementOptions} />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={labelStyle}>Postal Code (4 digits)</label>
+          <input
+            type="text"
+            value={postalCode}
+            onChange={(e) => {
+              // Only allow digits and limit to 4 characters
+              const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+              setPostalCode(value);
+            }}
+            placeholder="1234"
+            maxLength={4}
+            required
+            style={{
+              width: "100%",
+              padding: "0.75rem",
+              borderRadius: "8px",
+              border: "2px solid rgba(73, 163, 166, 0.3)",
+              fontSize: "16px",
+              boxSizing: "border-box",
+              background: "rgba(255, 255, 255, 0.8)",
+              color: "#08182b",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#49a3a6";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(73, 163, 166, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(73, 163, 166, 0.3)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
         </div>
         {paymentError && <div style={errorStyle}>{paymentError}</div>}
         <button

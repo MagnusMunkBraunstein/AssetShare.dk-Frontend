@@ -179,6 +179,13 @@ export default function HomePage({ token, userEmail, onLogout }) {
     marginLeft: "0.5rem",
   };
 
+  const roleBadgeStyle = {
+    ...badgeStyle,
+    background: "#49a3a6",
+    color: "#f9fdff",
+    fontSize: "0.85rem",
+  };
+
   return (
     <div style={containerStyle}>
       <div style={contentStyle}>
@@ -188,6 +195,7 @@ export default function HomePage({ token, userEmail, onLogout }) {
             <h1 style={titleStyle}>Welcome to AssetShare</h1>
             <p style={subtitleStyle}>
               Logged in as <strong style={{ color: "#1f6f78" }}>{userName || userEmail}</strong>
+              {userRole && <span style={roleBadgeStyle}>{userRole}</span>}
             </p>
           </div>
           <button

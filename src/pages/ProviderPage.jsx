@@ -13,11 +13,11 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const [loadingMachines, setLoadingMachines] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [editingMachine, setEditingMachine] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: "", category: "", location: "", price: "" });
+  const [editFormData, setEditFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE" });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
   const [showAddMachine, setShowAddMachine] = useState(false);
-  const [addFormData, setAddFormData] = useState({ name: "", category: "", location: "", price: "" });
+  const [addFormData, setAddFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE" });
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
   const [addSuccess, setAddSuccess] = useState(false);
@@ -60,7 +60,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
       
       setLoadingMachines(true);
       try {
-        const res = await fetch(`${API_BASE}/machines`, {
+        const res = await fetch(`${API_BASE}/machines/my-machines`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -68,9 +68,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
         });
 
         if (res.ok) {
-          const allMachines = await res.json();
-          // Filter machines owned by current user
-          const myMachines = allMachines.filter(m => m.ownerId === userId);
+          const myMachines = await res.json();
           setOwnMachines(myMachines);
         }
       } catch (err) {
@@ -408,6 +406,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                               category: machine.category || "",
                               location: machine.location || "",
                               price: machine.price ? machine.price.toString() : "",
+                              status: machine.status || "ACTIVE",
                             });
                             setEditError("");
                           }}
@@ -438,6 +437,20 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                         </div>
                         <div>
                           <strong>Price:</strong> {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
+                        </div>
+                        <div>
+                          <strong>Status:</strong>{" "}
+                          <span style={{
+                            padding: "0.25rem 0.5rem",
+                            borderRadius: "4px",
+                            fontSize: "0.85rem",
+                            fontWeight: "600",
+                            background: machine.status === "ACTIVE" ? "#d4edda" : "#f8d7da",
+                            color: machine.status === "ACTIVE" ? "#155724" : "#721c24",
+                            border: machine.status === "ACTIVE" ? "1px solid #28a745" : "1px solid #dc3545"
+                          }}>
+                            {machine.status || "ACTIVE"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -764,6 +777,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                     location: editFormData.location,
                     price: parseFloat(editFormData.price),
                     ownerId: editingMachine.ownerId,
+                    status: editFormData.status,
                   }),
                 });
 
@@ -774,15 +788,15 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 }
 
                 // Reload machines
-                const machinesRes = await fetch(`${API_BASE}/machines`, {
+                const machinesRes = await fetch(`${API_BASE}/machines/my-machines`, {
                   headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                   },
                 });
                 if (machinesRes.ok) {
-                  const allMachines = await machinesRes.json();
-                  setOwnMachines(allMachines.filter(m => m.ownerId === userId));
+                  const myMachines = await machinesRes.json();
+                  setOwnMachines(myMachines);
                 }
 
                 setEditingMachine(null);
@@ -888,6 +902,33 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                   required
                   disabled={editLoading}
                 />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#08182b", fontSize: "0.9rem" }}>
+                  Status *
+                </label>
+                <select
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    borderRadius: "8px",
+                    border: "2px solid rgba(73, 163, 166, 0.3)",
+                    fontSize: "1rem",
+                    transition: "all 0.3s ease",
+                    boxSizing: "border-box",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    color: "#08182b",
+                    cursor: "pointer",
+                  }}
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  required
+                  disabled={editLoading}
+                >
+                  <option value="ACTIVE">Active (Publicly listed)</option>
+                  <option value="INACTIVE">Inactive (Not publicly displayed)</option>
+                </select>
               </div>
 
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
@@ -1041,6 +1082,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                     category: addFormData.category,
                     location: addFormData.location,
                     price: parseFloat(addFormData.price),
+                    status: addFormData.status,
                   }),
                 });
 
@@ -1052,7 +1094,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
 
                 await res.json();
                 setAddSuccess(true);
-                setAddFormData({ name: "", category: "", location: "", price: "" });
+                setAddFormData({ name: "", category: "", location: "", price: "", status: "ACTIVE" });
 
                 // Reload machines
                 if (userId && token) {
@@ -1183,6 +1225,33 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                   required
                   disabled={addLoading}
                 />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#08182b", fontSize: "0.9rem" }}>
+                  Status *
+                </label>
+                <select
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    borderRadius: "8px",
+                    border: "2px solid rgba(73, 163, 166, 0.3)",
+                    fontSize: "1rem",
+                    transition: "all 0.3s ease",
+                    boxSizing: "border-box",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    color: "#08182b",
+                    cursor: "pointer",
+                  }}
+                  value={addFormData.status}
+                  onChange={(e) => setAddFormData({ ...addFormData, status: e.target.value })}
+                  required
+                  disabled={addLoading}
+                >
+                  <option value="ACTIVE">Active (Publicly listed)</option>
+                  <option value="INACTIVE">Inactive (Not publicly displayed)</option>
+                </select>
               </div>
 
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>

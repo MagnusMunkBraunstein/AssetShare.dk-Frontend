@@ -173,7 +173,7 @@ export default function LandingPage({ token, userEmail, onNavigateToLogin, onNav
                 </span>
                 <button
                   onClick={onNavigateToHome}
-                  style={buttonStyle}
+                  style={{ ...buttonStyle, color: "#ffffff" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
                     e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";

@@ -38,10 +38,16 @@ export default function StripeConnect({ token }) {
   }, []);
 
   async function checkAccountStatus() {
+    if (!token) {
+      setError("You must be logged in to check account status");
+      return;
+    }
+
     try {
+      const trimmedToken = token.trim();
       const res = await fetch(`${API_BASE}/stripe/connect/account-status`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${trimmedToken}`,
         },
       });
 
@@ -50,7 +56,11 @@ export default function StripeConnect({ token }) {
         setAccountStatus(data);
       } else {
         const text = await res.text();
-        setError("Failed to check account status: " + text);
+        if (res.status === 403 || res.status === 401) {
+          setError("Your session has expired. Please log out and log back in.");
+        } else {
+          setError("Failed to check account status: " + text);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -59,21 +69,32 @@ export default function StripeConnect({ token }) {
   }
 
   async function createAccount() {
+    if (!token) {
+      setError("You must be logged in to create a Stripe account");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setMessage("");
 
     try {
+      const trimmedToken = token.trim();
       const res = await fetch(`${API_BASE}/stripe/connect/create-account`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${trimmedToken}`,
         },
       });
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to create Stripe account");
+        if (res.status === 403 || res.status === 401) {
+          setError("Your session has expired. Please log out and log back in.");
+        } else {
+          setError(data.error || "Failed to create Stripe account");
+        }
         setLoading(false);
         return;
       }
@@ -91,11 +112,18 @@ export default function StripeConnect({ token }) {
   }
 
   async function createAccountLink() {
+    if (!token) {
+      setError("You must be logged in to create an account link");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setMessage("");
 
     try {
+      const trimmedToken = token.trim();
       // Redirect back to home page after onboarding with success parameter
       const returnUrl = window.location.origin + "?stripe_success=true";
       const res = await fetch(
@@ -103,24 +131,93 @@ export default function StripeConnect({ token }) {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${trimmedToken}`,
           },
         }
       );
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to create account link");
+        if (res.status === 403 || res.status === 401) {
+          setError("Your session has expired. Please log out and log back in.");
+        } else {
+          setError(data.error || "Failed to create account link");
+        }
         setLoading(false);
         return;
       }
 
       const data = await res.json();
-      // Redirect to Stripe onboarding
-      window.location.href = data.url;
+      // Open Stripe onboarding in a new window to avoid CSP issues
+      const stripeWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
+      
+      // Poll for window closure to check status
+      const checkClosed = setInterval(() => {
+        if (stripeWindow.closed) {
+          clearInterval(checkClosed);
+          setMessage("Onboarding window closed. Checking status...");
+          setTimeout(() => {
+            checkAccountStatus();
+          }, 1000);
+        }
+      }, 1000);
+      
+      // Fallback: if user doesn't close window, check status after 30 seconds
+      setTimeout(() => {
+        clearInterval(checkClosed);
+        if (!stripeWindow.closed) {
+          setMessage("Please complete the onboarding in the new window, then close it.");
+        }
+      }, 30000);
     } catch (err) {
       console.error(err);
       setError("Error creating account link");
+      setLoading(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!token) {
+      setError("You must be logged in to delete your Stripe account");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete your Stripe account? This will permanently remove the connection and you'll need to create a new account to receive payments.")) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const trimmedToken = token.trim();
+      const res = await fetch(`${API_BASE}/stripe/connect/delete-account`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${trimmedToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        if (res.status === 403 || res.status === 401) {
+          setError("Your session has expired. Please log out and log back in.");
+        } else {
+          setError(data.error || "Failed to delete Stripe account");
+        }
+        setLoading(false);
+        return;
+      }
+
+      setMessage("Stripe account deleted successfully. Refreshing status...");
+      setTimeout(() => {
+        checkAccountStatus();
+      }, 1000);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError("Error deleting Stripe account");
       setLoading(false);
     }
   }
@@ -198,6 +295,17 @@ export default function StripeConnect({ token }) {
     background: "rgba(73, 163, 166, 0.2)",
     color: "#124e66",
   };
+
+  if (!token) {
+    return (
+      <div style={containerStyle}>
+        <h2 style={titleStyle}>Stripe Payment Setup</h2>
+        <div style={errorStyle}>
+          You must be logged in to set up Stripe payments. Please log in first.
+        </div>
+      </div>
+    );
+  }
 
   if (!accountStatus) {
     return (
@@ -297,6 +405,26 @@ export default function StripeConnect({ token }) {
             }}
           >
             Refresh Status
+          </button>
+          <button
+            onClick={deleteAccount}
+            disabled={loading}
+            style={{
+              ...secondaryButtonStyle,
+              background: "rgba(220, 53, 69, 0.2)",
+              color: "#dc3545",
+              marginTop: "0.5rem",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.background = "rgba(220, 53, 69, 0.3)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(220, 53, 69, 0.2)";
+            }}
+          >
+            {loading ? "Deleting..." : "Delete Stripe Account"}
           </button>
         </div>
       )}

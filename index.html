@@ -8,6 +8,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Remove any CSP meta tags that might be cached
+      const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+      if (cspMeta) {
+        cspMeta.remove();
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

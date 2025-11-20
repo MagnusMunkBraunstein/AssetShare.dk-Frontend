@@ -78,13 +78,21 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
         endTime: new Date(endTime).toISOString(),
       };
 
-      console.log("Sending booking request with token:", token ? "Token present" : "No token");
+      // Ensure token is trimmed and valid
+      const trimmedToken = token ? token.trim() : null;
+      if (!trimmedToken) {
+        setError("You must be logged in to request a booking. Please log in again.");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Sending booking request with token:", trimmedToken ? `Token present (length: ${trimmedToken.length})` : "No token");
       
       const res = await fetch(`${API_BASE}/bookings/request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${trimmedToken}`,
         },
         body: JSON.stringify(bookingRequest),
       });

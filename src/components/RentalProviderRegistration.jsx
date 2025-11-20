@@ -177,7 +177,13 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
                 setSearching(true);
                 setFoundCompany(null);
                 try {
-                  const res = await fetch(`${API_BASE}/cvr/${cvr}`);
+                  const res = await fetch(`${API_BASE}/cvr/${cvr}`, {
+                    method: "GET",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    credentials: "omit", // Don't send cookies/credentials
+                  });
                   if (!res.ok) {
                     const text = await res.text();
                     setMsg("CVR lookup failed: " + text);

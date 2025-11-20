@@ -2,10 +2,14 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import HomePage from "./pages/HomePage";
+import ProviderPage from "./pages/ProviderPage";
+import LandingPage from "./pages/LandingPage";
+import AdminPage from "./pages/AdminPage";
+
+const API_BASE = "http://localhost:8080/api";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("login"); 
+  const [currentPage, setCurrentPage] = useState("landing"); 
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem("userEmail"));
 
@@ -17,9 +21,38 @@ function App() {
     else localStorage.removeItem("userEmail");
   }, [token, userEmail]);
 
-  function handleLoginSuccess(tokenFromApi, emailFromApi) {
+  async function handleLoginSuccess(tokenFromApi, emailFromApi) {
     setToken(tokenFromApi);
     setUserEmail(emailFromApi);
+    
+    // Check if user is admin and redirect accordingly
+    try {
+      const res = await fetch(`${API_BASE}/users`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenFromApi}`,
+        },
+      });
+
+      if (res.ok) {
+        const users = await res.json();
+        const currentUser = users.find(u => u.email === emailFromApi);
+        if (currentUser) {
+          if (currentUser.role === "ADMIN") {
+            setCurrentPage("admin");
+            return;
+          }
+          // BOTH, UDLEJER users go to home (rental provider dashboard)
+          // LEJER users also go to home (regular user dashboard)
+          setCurrentPage("home");
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("Error checking user role:", err);
+    }
+    
+    // Default to home page for non-admin users
     setCurrentPage("home");
   }
 
@@ -39,11 +72,21 @@ function App() {
 
     setToken(null);
     setUserEmail(null);
-    setCurrentPage("login");
+    setCurrentPage("landing");
   }
 
   let content;
-  if (currentPage === "login") {
+  if (currentPage === "landing") {
+    content = (
+      <LandingPage
+        token={token}
+        userEmail={userEmail}
+        onNavigateToLogin={() => setCurrentPage("login")}
+        onNavigateToRegister={() => setCurrentPage("register")}
+        onNavigateToHome={() => setCurrentPage("home")}
+      />
+    );
+  } else if (currentPage === "login") {
     content = (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
@@ -59,10 +102,20 @@ function App() {
     );
   } else if (currentPage === "home") {
     content = (
-      <HomePage
+      <ProviderPage
         token={token}
         userEmail={userEmail}
         onLogout={handleLogout}
+        onNavigateToLanding={() => setCurrentPage("landing")}
+      />
+    );
+  } else if (currentPage === "admin") {
+    content = (
+      <AdminPage
+        token={token}
+        userEmail={userEmail}
+        onLogout={handleLogout}
+        onNavigateToLanding={() => setCurrentPage("landing")}
       />
     );
   }

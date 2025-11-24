@@ -457,7 +457,14 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
             <button
               onClick={loadUsers}
               disabled={loading}
-              style={secondaryButtonStyle}
+              style={{
+                ...secondaryButtonStyle,
+                background: loading
+                  ? "#49a3a6"
+                  : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+                color: "#ffffff",
+                border: "none",
+              }}
               onMouseEnter={(e) => {
                 if (!loading) {
                   e.currentTarget.style.transform = "translateY(-2px)";

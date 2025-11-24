@@ -241,7 +241,7 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
                 borderRadius: "8px",
                 border: "none",
                 background: "linear-gradient(135deg, #124e66 0%, #1f6f78 100%)",
-                color: "#9adbd6",
+                color: "#ffffff",
                 fontWeight: "600",
                 cursor: "pointer",
                 boxShadow: "0 4px 15px rgba(18, 78, 102, 0.4)",
@@ -291,7 +291,7 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
                 background: loadingBookings
                   ? "#49a3a6"
                   : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-                color: "#9adbd6",
+                color: "#ffffff",
                 boxShadow: loadingBookings ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
                 opacity: loadingBookings ? 0.6 : 1,
               }}

@@ -291,7 +291,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const logoutButtonStyle = {
     ...buttonStyle,
     background: "linear-gradient(135deg, #124e66 0%, #1f6f78 100%)",
-    color: "#9adbd6",
+    color: "#ffffff",
     boxShadow: "0 4px 15px rgba(18, 78, 102, 0.4)",
   };
 
@@ -392,7 +392,16 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
             {onNavigateToLanding && (
               <button
                 onClick={onNavigateToLanding}
-                style={secondaryButtonStyle}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  borderRadius: "8px",
+                  border: "2px solid #49a3a6",
+                  background: "white",
+                  color: "#1f6f78",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 15px rgba(73, 163, 166, 0.3)",
+                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.boxShadow = "0 6px 20px rgba(73, 163, 166, 0.5)";
@@ -579,10 +588,16 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                             setEditError("");
                           }}
                           style={{
-                            ...secondaryButtonStyle,
                             padding: "0.5rem 1rem",
+                            borderRadius: "8px",
+                            border: "none",
                             fontSize: "0.9rem",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            transition: "all 0.3s ease",
+                            background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
                             color: "#ffffff",
+                            boxShadow: "0 4px 15px rgba(31, 111, 120, 0.4)",
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.transform = "translateY(-2px)";
@@ -590,7 +605,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 4px 15px rgba(73, 163, 166, 0.3)";
+                            e.currentTarget.style.boxShadow = "0 4px 15px rgba(31, 111, 120, 0.4)";
                           }}
                         >
                           ✏️ Edit
@@ -670,10 +685,19 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                   }}
                   disabled={loadingBookings}
                   style={{
-                    ...secondaryButtonStyle,
                     padding: "0.75rem 1.5rem",
+                    borderRadius: "8px",
+                    border: "none",
                     fontSize: "1rem",
+                    fontWeight: "600",
+                    cursor: loadingBookings ? "not-allowed" : "pointer",
+                    transition: "all 0.3s ease",
+                    background: loadingBookings
+                      ? "#49a3a6"
+                      : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
                     color: "#ffffff",
+                    boxShadow: loadingBookings ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
+                    opacity: loadingBookings ? 0.6 : 1,
                   }}
                   onMouseEnter={(e) => {
                     if (!loadingBookings) {

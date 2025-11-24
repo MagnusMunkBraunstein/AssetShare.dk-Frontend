@@ -286,7 +286,7 @@ export default function StripeConnect({ token }) {
           <button
             onClick={checkAccountStatus}
             disabled={loading}
-            style={secondaryButtonStyle}
+            style={{ ...secondaryButtonStyle, color: "#ffffff" }}
             onMouseEnter={(e) => {
               if (!loading) {
                 e.currentTarget.style.background = "rgba(73, 163, 166, 0.3)";

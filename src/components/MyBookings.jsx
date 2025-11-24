@@ -268,7 +268,7 @@ export default function MyBookings({ token }) {
             background: loading
               ? "#49a3a6"
               : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-            color: "#9adbd6",
+            color: "#ffffff",
             boxShadow: loading
               ? "none"
               : "0 4px 15px rgba(31, 111, 120, 0.4)",

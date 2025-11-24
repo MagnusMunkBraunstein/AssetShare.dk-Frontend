@@ -3,7 +3,15 @@ import MachineSearch from "../components/MachineSearch";
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function LandingPage({ token, userEmail, onNavigateToLogin, onNavigateToRegister, onNavigateToHome }) {
+export default function LandingPage({
+  token,
+  userEmail,
+  onNavigateToLogin,
+  onNavigateToRegister,
+  onNavigateToDashboard,
+  dashboardLabel = "Dashboard",
+  dashboardDisabled = false,
+}) {
   const [userName, setUserName] = useState("");
 
   // Load current user's name when component mounts
@@ -172,18 +180,26 @@ export default function LandingPage({ token, userEmail, onNavigateToLogin, onNav
                   👤 {userName || userEmail}
                 </span>
                 <button
-                  onClick={onNavigateToHome}
-                  style={{ ...buttonStyle, color: "#ffffff" }}
+                  onClick={onNavigateToDashboard}
+                  disabled={dashboardDisabled}
+                  style={{
+                    ...buttonStyle,
+                    color: "#ffffff",
+                    opacity: dashboardDisabled ? 0.6 : 1,
+                    cursor: dashboardDisabled ? "not-allowed" : "pointer",
+                  }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";
+                    if (!dashboardDisabled) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";
+                    }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
                     e.currentTarget.style.boxShadow = "0 4px 15px rgba(31, 111, 120, 0.4)";
                   }}
                 >
-                  Dashboard
+                  {dashboardLabel}
                 </button>
               </>
             ) : (

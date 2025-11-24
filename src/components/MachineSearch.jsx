@@ -349,6 +349,11 @@ export default function MachineSearch({ token }) {
                     </div>
                   )}
                 </div>
+                {machine.instantBookingEnabled && (
+                  <div style={{ marginTop: "0.5rem", color: "#1f6f78", fontWeight: "600" }}>
+                    ⚡ Instant booking available — no manual approval needed.
+                  </div>
+                )}
                 {token && (
                   <button
                     onClick={() => setSelectedMachine(machine)}
@@ -362,7 +367,7 @@ export default function MachineSearch({ token }) {
                       e.currentTarget.style.boxShadow = "0 4px 15px rgba(31, 111, 120, 0.4)";
                     }}
                   >
-                    📅 Book This Machine
+                    {machine.instantBookingEnabled ? "⚡ Instant Book" : "📅 Book This Machine"}
                   </button>
                 )}
               </div>

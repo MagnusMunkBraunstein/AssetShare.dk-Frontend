@@ -404,6 +404,11 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
             {machine.location && `📍 ${machine.location}`}
             {machine.price && ` • 💰 $${machine.price.toFixed(2)}/hour`}
           </div>
+          {machine.instantBookingEnabled && (
+            <div style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#1f6f78", fontWeight: "600" }}>
+              ⚡ Instant booking enabled — your reservation is auto-approved when payment succeeds.
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleBookingRequest}>
@@ -439,7 +444,11 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
               disabled={loading || !stripePublishableKey}
               style={buttonStyle}
             >
-              {loading ? "Creating Booking..." : "Request Booking & Pay"}
+              {loading
+                ? "Creating Booking..."
+                : machine.instantBookingEnabled
+                ? "Instant Book & Pay"
+                : "Request Booking & Pay"}
             </button>
           ) : null}
         </form>

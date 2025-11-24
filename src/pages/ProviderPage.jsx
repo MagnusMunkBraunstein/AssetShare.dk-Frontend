@@ -13,11 +13,11 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const [loadingMachines, setLoadingMachines] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [editingMachine, setEditingMachine] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE" });
+  const [editFormData, setEditFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE", instantBookingEnabled: false });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
   const [showAddMachine, setShowAddMachine] = useState(false);
-  const [addFormData, setAddFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE" });
+  const [addFormData, setAddFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE", instantBookingEnabled: false });
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
   const [addSuccess, setAddSuccess] = useState(false);
@@ -368,7 +368,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 <button
                   onClick={() => {
                     setShowAddMachine(true);
-                    setAddFormData({ name: "", category: "", location: "", price: "" });
+                    setAddFormData({ name: "", category: "", location: "", price: "", status: "ACTIVE", instantBookingEnabled: false });
                     setAddError("");
                     setAddSuccess(false);
                   }}
@@ -407,6 +407,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                               location: machine.location || "",
                               price: machine.price ? machine.price.toString() : "",
                               status: machine.status || "ACTIVE",
+                              instantBookingEnabled: Boolean(machine.instantBookingEnabled),
                             });
                             setEditError("");
                           }}
@@ -451,6 +452,10 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                           }}>
                             {machine.status || "ACTIVE"}
                           </span>
+                        </div>
+                        <div>
+                          <strong>Instant Booking:</strong>{" "}
+                          {machine.instantBookingEnabled ? "Enabled ⚡" : "Disabled"}
                         </div>
                       </div>
                     </div>
@@ -527,6 +532,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                   {allBookings.map((booking) => {
                     const machine = machinesMap[booking.machineId];
                     const statusStyle = getStatusColor(booking.status);
+                    const instantBookingEnabled = machine?.instantBookingEnabled;
                     
                     return (
                       <div key={booking.id} style={userCardStyle}>
@@ -569,7 +575,13 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                             </div>
                           </div>
                           
-                          {booking.status === "REQUESTED" && (
+                          {instantBookingEnabled && booking.status === "REQUESTED" && (
+                            <div style={{ fontSize: "0.85rem", color: "#124e66", fontStyle: "italic" }}>
+                              Instant booking is enabled for this machine. Approval happens automatically after payment.
+                            </div>
+                          )}
+
+                          {booking.status === "REQUESTED" && !instantBookingEnabled && (
                             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                               <button
                                 onClick={async () => {
@@ -778,6 +790,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                     price: parseFloat(editFormData.price),
                     ownerId: editingMachine.ownerId,
                     status: editFormData.status,
+                    instantBookingEnabled: editFormData.instantBookingEnabled,
                   }),
                 });
 
@@ -929,6 +942,22 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                   <option value="ACTIVE">Active (Publicly listed)</option>
                   <option value="INACTIVE">Inactive (Not publicly displayed)</option>
                 </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#08182b", fontSize: "0.9rem" }}>
+                  Instant Booking
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#124e66", fontSize: "0.9rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={editFormData.instantBookingEnabled}
+                    onChange={(e) => setEditFormData({ ...editFormData, instantBookingEnabled: e.target.checked })}
+                    disabled={editLoading}
+                    style={{ width: "1rem", height: "1rem" }}
+                  />
+                  <span>Auto-approve bookings after payment for this machine.</span>
+                </div>
               </div>
 
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
@@ -1083,6 +1112,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                     location: addFormData.location,
                     price: parseFloat(addFormData.price),
                     status: addFormData.status,
+                    instantBookingEnabled: addFormData.instantBookingEnabled,
                   }),
                 });
 
@@ -1094,7 +1124,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
 
                 await res.json();
                 setAddSuccess(true);
-                setAddFormData({ name: "", category: "", location: "", price: "", status: "ACTIVE" });
+                setAddFormData({ name: "", category: "", location: "", price: "", status: "ACTIVE", instantBookingEnabled: false });
 
                 // Reload machines
                 if (userId && token) {

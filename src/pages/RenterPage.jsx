@@ -320,7 +320,7 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
                           }}
                         >
                           <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#08182b" }}>
-                            {machine ? machine.name : `Machine ${booking.machineId?.substring(0, 8)}...`}
+                            {machine ? machine.name : booking.machineName || "Unknown machine"}
                           </h3>
                           <span
                             style={{

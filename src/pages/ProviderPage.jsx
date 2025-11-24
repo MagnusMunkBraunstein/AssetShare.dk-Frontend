@@ -21,6 +21,10 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
   const [addSuccess, setAddSuccess] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState("");
+  const isProviderRole = userRole === "BOTH" || userRole === "UDLEJER";
 
 
   // Load current user's name when component mounts
@@ -56,7 +60,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   // Load own machines when user is BOTH or UDLEJER
   useEffect(() => {
     async function loadOwnMachines() {
-      if (!userId || !token || (userRole !== "BOTH" && userRole !== "UDLEJER")) return;
+      if (!userId || !token || !isProviderRole) return;
       
       setLoadingMachines(true);
       try {
@@ -79,7 +83,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
     }
 
     loadOwnMachines();
-  }, [userId, token, userRole]);
+  }, [userId, token, isProviderRole]);
 
   // Load machine details for bookings
   const loadMachineDetails = useCallback(async (machineIds) => {
@@ -103,10 +107,49 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
     setMachinesMap(machineMap);
   }, [token]);
 
+  const loadDashboardStats = useCallback(async () => {
+    if (!token || !isProviderRole) {
+      setDashboardStats(null);
+      return;
+    }
+
+    setLoadingStats(true);
+    setStatsError("");
+
+    try {
+      const res = await fetch(`${API_BASE}/dashboard/provider`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        setStatsError(text || "Failed to load dashboard stats");
+        setDashboardStats(null);
+        return;
+      }
+
+      const stats = await res.json();
+      setDashboardStats(stats);
+    } catch (err) {
+      console.error("Error loading dashboard stats:", err);
+      setStatsError("Error loading stats: " + err.message);
+      setDashboardStats(null);
+    } finally {
+      setLoadingStats(false);
+    }
+  }, [token, isProviderRole]);
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, [loadDashboardStats]);
+
   // Load all bookings for user's machines
   useEffect(() => {
     async function loadAllBookings() {
-      if (!token || (userRole !== "BOTH" && userRole !== "UDLEJER")) return;
+      if (!token || !isProviderRole) return;
       
       setLoadingBookings(true);
       try {
@@ -133,7 +176,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
     }
 
     loadAllBookings();
-  }, [token, userRole, loadMachineDetails]);
+  }, [token, isProviderRole, loadMachineDetails]);
 
   // Format date time
   function formatDateTime(dateString) {
@@ -164,6 +207,20 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
       default:
         return { background: "#f0f0f0", color: "#333", border: "1px solid #ccc" };
     }
+  }
+
+  function formatCurrency(amount) {
+    if (amount === null || amount === undefined) {
+      return "DKK 0.00";
+    }
+    const value = typeof amount === "number" ? amount : parseFloat(amount);
+    if (Number.isNaN(value)) {
+      return "DKK 0.00";
+    }
+    return `DKK ${value.toLocaleString("da-DK", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   const containerStyle = {
@@ -254,6 +311,40 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
     borderRadius: "8px",
     marginTop: "1rem",
     border: "1px solid rgba(255, 150, 150, 0.5)",
+  };
+
+  const statsGridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "1rem",
+  };
+
+  const statCardStyle = {
+    background: "rgba(73, 163, 166, 0.1)",
+    border: "1px solid rgba(73, 163, 166, 0.2)",
+    borderRadius: "12px",
+    padding: "1rem",
+    boxShadow: "0 2px 8px rgba(8, 24, 43, 0.08)",
+  };
+
+  const statLabelStyle = {
+    fontSize: "0.85rem",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    color: "#124e66",
+    marginBottom: "0.35rem",
+  };
+
+  const statValueStyle = {
+    fontSize: "1.75rem",
+    fontWeight: "700",
+    color: "#08182b",
+  };
+
+  const statSubtextStyle = {
+    fontSize: "0.85rem",
+    color: "#4d6071",
+    marginTop: "0.25rem",
   };
 
   const roleBadgeStyle = {
@@ -352,8 +443,84 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
         )}
 
         {/* Rental Provider Dashboard - Show for BOTH and UDLEJER */}
-        {(userRole === "BOTH" || userRole === "UDLEJER") && (
+        {isProviderRole && (
           <>
+            <div style={cardStyle}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#08182b" }}>Business Overview</h2>
+                  <p style={{ margin: "0.5rem 0 0 0", color: "#124e66", fontSize: "0.9rem" }}>
+                    Snapshot of your fleet utilisation and earnings
+                  </p>
+                </div>
+                <button
+                  onClick={loadDashboardStats}
+                  disabled={loadingStats}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "8px",
+                    border: "none",
+                    fontSize: "1rem",
+                    fontWeight: "600",
+                    cursor: loadingStats ? "not-allowed" : "pointer",
+                    transition: "all 0.3s ease",
+                    background: loadingStats
+                      ? "#49a3a6"
+                      : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+                    color: "#ffffff",
+                    boxShadow: loadingStats ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
+                    opacity: loadingStats ? 0.6 : 1,
+                  }}
+                >
+                  {loadingStats ? "Loading..." : "🔄 Refresh"}
+                </button>
+              </div>
+
+              {statsError && <div style={errorStyle}>{statsError}</div>}
+
+              <div style={statsGridStyle}>
+                <div style={statCardStyle}>
+                  <div style={statLabelStyle}>Machines Listed</div>
+                  <div style={statValueStyle}>
+                    {dashboardStats ? dashboardStats.totalMachines : loadingStats ? "…" : "0"}
+                  </div>
+                  <div style={statSubtextStyle}>Total machines on AssetShare</div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={statLabelStyle}>Machines Booked Now</div>
+                  <div style={statValueStyle}>
+                    {dashboardStats ? dashboardStats.machinesCurrentlyBooked : loadingStats ? "…" : "0"}
+                  </div>
+                  <div style={statSubtextStyle}>Currently engaged rentals</div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={statLabelStyle}>Active Requests</div>
+                  <div style={statValueStyle}>
+                    {dashboardStats ? dashboardStats.activeBookings : loadingStats ? "…" : "0"}
+                  </div>
+                  <div style={statSubtextStyle}>Pending or ongoing bookings</div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={statLabelStyle}>Total Revenue</div>
+                  <div style={statValueStyle}>
+                    {dashboardStats ? formatCurrency(dashboardStats.totalRevenue) : loadingStats ? "…" : "DKK 0.00"}
+                  </div>
+                  <div style={statSubtextStyle}>All-time payouts</div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={statLabelStyle}>Revenue (This Month)</div>
+                  <div style={statValueStyle}>
+                    {dashboardStats ? formatCurrency(dashboardStats.revenueThisMonth) : loadingStats ? "…" : "DKK 0.00"}
+                  </div>
+                  <div style={statSubtextStyle}>Paid since month start</div>
+                </div>
+              </div>
+            </div>
+
             {/* My Machines Section */}
             <div style={cardStyle}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
@@ -540,7 +707,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                           <div style={{ flex: 1 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
                               <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#08182b" }}>
-                                {machine ? machine.name : `Machine ${booking.machineId?.substring(0, 8)}...`}
+                                {machine ? machine.name : booking.machineName || "Unknown machine"}
                               </h3>
                               <span
                                 style={{
@@ -570,7 +737,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                                 <strong>End:</strong> {formatDateTime(booking.endTime)}
                               </div>
                               <div>
-                                <strong>Renter ID:</strong> {booking.renterId?.substring(0, 8)}...
+                                <strong>Renter:</strong> {booking.renterName || "Unknown renter"}
                               </div>
                             </div>
                           </div>

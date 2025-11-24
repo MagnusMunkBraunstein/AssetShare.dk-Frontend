@@ -299,7 +299,7 @@ export default function MyBookings({ token }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
                       <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#08182b" }}>
-                        {machine ? machine.name : `Machine ${booking.machineId?.substring(0, 8)}...`}
+                        {machine ? machine.name : booking.machineName || "Unknown machine"}
                       </h3>
                       <span
                         style={{
@@ -329,7 +329,7 @@ export default function MyBookings({ token }) {
                         <strong>End:</strong> {formatDateTime(booking.endTime)}
                       </div>
                       <div>
-                        <strong>Renter ID:</strong> {booking.renterId?.substring(0, 8)}...
+                        <strong>Renter:</strong> {booking.renterName || "Unknown renter"}
                       </div>
                     </div>
                   </div>

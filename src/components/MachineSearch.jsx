@@ -342,10 +342,10 @@ export default function MachineSearch({ token }) {
                     <span style={infoLabelStyle}>💰 Price:</span>
                     {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
                   </div>
-                  {machine.ownerId && (
+                  {machine.ownerName && (
                     <div style={infoItemStyle}>
-                      <span style={infoLabelStyle}>👤 Owner ID:</span>
-                      {machine.ownerId}
+                      <span style={infoLabelStyle}>👤 Owner:</span>
+                      {machine.ownerName}
                     </div>
                   )}
                 </div>

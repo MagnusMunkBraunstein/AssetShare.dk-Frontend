@@ -11,6 +11,22 @@ import {
 
 const API_BASE = "http://localhost:8080/api";
 
+function formatDateTimeInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function withSeconds(value) {
+  if (!value) {
+    return null;
+  }
+  return value.length === 16 ? `${value}:00` : value;
+}
+
 export default function BookingRequest({ machine, token, onClose, onBookingSuccess }) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -46,17 +62,8 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     
     // Format for datetime-local input (YYYY-MM-DDTHH:mm)
-    const formatDateTime = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-
-    setStartTime(formatDateTime(oneHourLater));
-    setEndTime(formatDateTime(twoHoursLater));
+    setStartTime(formatDateTimeInput(oneHourLater));
+    setEndTime(formatDateTimeInput(twoHoursLater));
   }, []);
 
   async function handleBookingRequest(e) {
@@ -74,8 +81,8 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
       // Request booking from backend
       const bookingRequest = {
         machineId: machine.id,
-        startTime: new Date(startTime).toISOString(),
-        endTime: new Date(endTime).toISOString(),
+        startTime: withSeconds(startTime),
+        endTime: withSeconds(endTime),
       };
 
       console.log("Sending booking request with token:", token ? "Token present" : "No token");
@@ -127,7 +134,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
   }
 
   // Inner component that uses Stripe hooks
-  function PaymentForm({ clientSecret, paymentIntentId, onSuccess, onError }) {
+  function PaymentForm({ clientSecret, paymentIntentId, onSuccess, onError, authToken }) {
     const stripe = useStripe();
     const elements = useElements();
     const [processing, setProcessing] = useState(false);
@@ -180,11 +187,44 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
       }
 
       if (paymentIntent && paymentIntent.status === "succeeded") {
-        if (onSuccess) {
-          onSuccess({
-            paymentIntentId,
-            message: "Booking requested and payment processed successfully!",
+        // Create the booking now that payment has succeeded
+        try {
+          const confirmRes = await fetch(`${API_BASE}/bookings/confirm-payment/${paymentIntentId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
           });
+
+          if (!confirmRes.ok) {
+            const text = await confirmRes.text();
+            setPaymentError("Payment succeeded but failed to create booking: " + text);
+            setProcessing(false);
+            if (onError) onError("Failed to create booking after payment");
+            return;
+          }
+
+          // For local development: also mark payment as paid (webhook would do this in production)
+          try {
+            await fetch(`${API_BASE}/payments/test/mark-paid/${paymentIntentId}`, {
+              method: "POST",
+            });
+          } catch (err) {
+            console.error("Error marking payment as paid:", err);
+            // Don't fail the booking if this fails - webhook will handle it in production
+          }
+
+          if (onSuccess) {
+            onSuccess({
+              paymentIntentId,
+              message: "Booking confirmed and payment processed successfully!",
+            });
+          }
+        } catch (err) {
+          setPaymentError("Error confirming booking: " + err.message);
+          setProcessing(false);
+          if (onError) onError(err.message);
         }
       }
     }
@@ -420,7 +460,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
               onChange={(e) => setStartTime(e.target.value)}
               style={inputStyle}
               required
-              min={new Date().toISOString().slice(0, 16)}
+              min={formatDateTimeInput(new Date())}
             />
           </div>
 
@@ -432,7 +472,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
               onChange={(e) => setEndTime(e.target.value)}
               style={inputStyle}
               required
-              min={startTime || new Date().toISOString().slice(0, 16)}
+              min={startTime || formatDateTimeInput(new Date())}
             />
           </div>
 
@@ -458,18 +498,8 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
             <PaymentForm
               clientSecret={paymentIntentData.clientSecret}
               paymentIntentId={paymentIntentData.paymentIntentId}
+              authToken={token}
               onSuccess={async (data) => {
-                // For local development: automatically mark payment as paid
-                // In production, this would be handled by Stripe webhooks
-                try {
-                  await fetch(`${API_BASE}/payments/test/mark-paid/${data.paymentIntentId}`, {
-                    method: "POST",
-                  });
-                } catch (err) {
-                  console.error("Error marking payment as paid:", err);
-                  // Don't fail the booking if this fails - webhook will handle it in production
-                }
-                
                 if (onBookingSuccess) {
                   onBookingSuccess(data);
                 }

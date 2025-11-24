@@ -3,6 +3,7 @@ import MachineSearch from "../components/MachineSearch";
 import RentalProviderRegistration from "../components/RentalProviderRegistration";
 import AddMachine from "../components/AddMachine";
 import MyBookings from "../components/MyBookings";
+import TenantBookings from "../components/TenantBookings";
 import StripeConnect from "../components/StripeConnect";
 
 const API_BASE = "http://localhost:8080/api";
@@ -335,6 +336,13 @@ export default function HomePage({ token, userEmail, onLogout }) {
         {(userRole === "BOTH" || userRole === "UDLEJER" || userRole === "ADMIN") && (
           <div style={cardStyle}>
             <MyBookings token={token} />
+          </div>
+        )}
+
+        {/* Tenant Bookings Section - Show for LEJER, BOTH, or ADMIN */}
+        {(userRole === "LEJER" || userRole === "BOTH" || userRole === "ADMIN") && (
+          <div style={cardStyle}>
+            <TenantBookings token={token} />
           </div>
         )}
 

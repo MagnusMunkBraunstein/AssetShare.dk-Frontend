@@ -220,7 +220,7 @@ export default function LandingPage({
                 </button>
                 <button
                   onClick={onNavigateToRegister}
-                  style={buttonStyle}
+                  style={{ ...buttonStyle, color: "#ffffff" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
                     e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";
@@ -249,7 +249,7 @@ export default function LandingPage({
             <div style={buttonGroupStyle}>
               <button
                 onClick={onNavigateToRegister}
-                style={buttonStyle}
+                style={{ ...buttonStyle, color: "#ffffff" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.boxShadow = "0 6px 20px rgba(31, 111, 120, 0.6)";

@@ -7,6 +7,7 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -29,6 +30,9 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
           const currentUser = data.find(u => u.email === userEmail);
           if (currentUser) {
             setUserName(currentUser.name);
+            setUserRole(currentUser.role);
+          } else {
+            setUserRole(null);
           }
         }
       } catch (err) {
@@ -374,6 +378,11 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
             <h1 style={titleStyle}>Admin Dashboard</h1>
             <p style={subtitleStyle}>
               Welcome, <strong style={{ color: "#1f6f78" }}>{userName || userEmail}</strong>
+              {userRole && (
+                <span style={{ ...roleBadgeStyle, marginLeft: "0.5rem" }}>
+                  {userRole}
+                </span>
+              )}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>

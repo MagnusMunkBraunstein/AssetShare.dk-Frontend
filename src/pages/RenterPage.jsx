@@ -5,6 +5,7 @@ const API_BASE = "http://localhost:8080/api";
 
 export default function RenterPage({ token, userEmail, onLogout, onNavigateToLanding }) {
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [machines, setMachines] = useState({});
   const [loadingBookings, setLoadingBookings] = useState(false);
@@ -30,6 +31,9 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
           const currentUser = data.find((u) => u.email === userEmail);
           if (currentUser) {
             setUserName(currentUser.name);
+            setUserRole(currentUser.role);
+          } else {
+            setUserRole(null);
           }
         }
       } catch (err) {
@@ -161,6 +165,17 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
     gap: "1rem",
   };
 
+  const roleBadgeStyle = {
+    display: "inline-block",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#ffffff",
+    padding: "0.25rem 0.75rem",
+    borderRadius: "20px",
+    fontSize: "0.85rem",
+    fontWeight: "600",
+    marginLeft: "0.5rem",
+  };
+
   const bookingCardStyle = {
     background: "rgba(255, 255, 255, 0.7)",
     padding: "1.25rem",
@@ -201,6 +216,7 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
             <h1 style={{ fontSize: "1.75rem", color: "#08182b", margin: 0 }}>Renter Dashboard</h1>
             <p style={{ margin: "0.5rem 0 0 0", color: "#124e66" }}>
               Logged in as <strong>{userName || userEmail}</strong>
+              {userRole && <span style={roleBadgeStyle}>{userRole}</span>}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>

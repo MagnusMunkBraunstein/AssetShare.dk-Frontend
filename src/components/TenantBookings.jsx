@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ReturnForm from "./ReturnForm";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -8,6 +9,8 @@ export default function TenantBookings({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [machines, setMachines] = useState({}); // Cache machine details
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   async function loadBookings() {
     setLoading(true);
@@ -155,9 +158,34 @@ export default function TenantBookings({ token }) {
     borderBottom: "2px solid rgba(73, 163, 166, 0.3)",
   };
 
+  const isBookingEnded = (endTime) => {
+    if (!endTime) return false;
+    return new Date(endTime) <= new Date();
+  };
+
+  const canSubmitReturnForm = (booking) => {
+    return (
+      booking.status === "APPROVED" &&
+      isBookingEnded(booking.endTime) &&
+      !(booking.hasReturnForm === true)
+    );
+  };
+
+  const handleOpenReturnForm = (booking) => {
+    setSelectedBooking(booking);
+    setShowReturnForm(true);
+  };
+
+  const handleReturnFormSuccess = () => {
+    setShowReturnForm(false);
+    setSelectedBooking(null);
+    loadBookings(); // Reload bookings to update status
+  };
+
   const renderBookingCard = (booking) => {
     const machine = machines[booking.machineId];
     const statusStyle = getStatusColor(booking.status);
+    const needsReturnForm = canSubmitReturnForm(booking);
     
     return (
       <div key={booking.id} style={bookingCardStyle}>
@@ -185,7 +213,7 @@ export default function TenantBookings({ token }) {
           </div>
         )}
         
-        <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
+        <div style={{ fontSize: "0.9rem", color: "#124e66", marginBottom: needsReturnForm ? "1rem" : "0" }}>
           <div>
             <strong>Start:</strong> {formatDateTime(booking.startTime)}
           </div>
@@ -193,6 +221,64 @@ export default function TenantBookings({ token }) {
             <strong>Slut:</strong> {formatDateTime(booking.endTime)}
           </div>
         </div>
+
+        {needsReturnForm && (
+          <div
+            style={{
+              background: "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
+              color: "white",
+              padding: "1rem",
+              borderRadius: "8px",
+              marginTop: "1rem",
+            }}
+          >
+            <div style={{ marginBottom: "0.5rem", fontWeight: "600" }}>
+              ⚠️ Booking afsluttet - Afleveringsformular påkrævet
+            </div>
+            <p style={{ margin: "0 0 0.75rem 0", fontSize: "0.9rem" }}>
+              Din booking er afsluttet. Udfyld venligst afleveringsformularen for at aflevere maskinen digitalt.
+            </p>
+            <button
+              onClick={() => handleOpenReturnForm(booking)}
+              style={{
+                padding: "0.75rem 1.5rem",
+                borderRadius: "8px",
+                border: "none",
+                fontSize: "1rem",
+                fontWeight: "600",
+                cursor: "pointer",
+                background: "white",
+                color: "#ff9800",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              Udfyld afleveringsformular
+            </button>
+          </div>
+        )}
+
+        {booking.hasReturnForm === true && (
+          <div
+            style={{
+              background: "#d4edda",
+              color: "#155724",
+              padding: "0.75rem",
+              borderRadius: "8px",
+              marginTop: "1rem",
+              fontSize: "0.9rem",
+            }}
+          >
+            ✅ Afleveringsformular indsendt
+          </div>
+        )}
       </div>
     );
   };
@@ -281,6 +367,19 @@ export default function TenantBookings({ token }) {
             )}
           </div>
         </div>
+      )}
+
+      {showReturnForm && selectedBooking && (
+        <ReturnForm
+          bookingId={selectedBooking.id}
+          machineName={machines[selectedBooking.machineId]?.name || "Maskine"}
+          onClose={() => {
+            setShowReturnForm(false);
+            setSelectedBooking(null);
+          }}
+          onSuccess={handleReturnFormSuccess}
+          token={token}
+        />
       )}
     </div>
   );

@@ -1,16 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import MachineSearch from "../components/MachineSearch";
 import RentalProviderRegistration from "../components/RentalProviderRegistration";
+import TenantBookings from "../components/TenantBookings";
 
 const API_BASE = "http://localhost:8080/api";
 
 export default function RenterPage({ token, userEmail, onLogout, onNavigateToLanding, onSwitchToProvider }) {
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [machines, setMachines] = useState({});
-  const [loadingBookings, setLoadingBookings] = useState(false);
-  const [error, setError] = useState("");
   const [showProviderForm, setShowProviderForm] = useState(false);
 
   useEffect(() => {
@@ -46,98 +43,6 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
     loadCurrentUserName();
   }, [userEmail, token]);
 
-  const loadMachineDetails = useCallback(
-    async (ids) => {
-      const map = {};
-      for (const machineId of ids) {
-        try {
-          const res = await fetch(`${API_BASE}/machines/${machineId}`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (res.ok) {
-            map[machineId] = await res.json();
-          }
-        } catch (err) {
-          console.error("Error loading machine", err);
-        }
-      }
-      setMachines(map);
-    },
-    [token]
-  );
-
-  const refreshBookings = useCallback(async () => {
-    if (!token) {
-      setBookings([]);
-      return;
-    }
-
-    setLoadingBookings(true);
-    setError("");
-
-    try {
-      const res = await fetch(`${API_BASE}/bookings/my-bookings`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        setError(text || "Failed to load bookings");
-        setBookings([]);
-        return;
-      }
-
-      const data = await res.json();
-      setBookings(data);
-      const machineIds = [...new Set(data.map((b) => b.machineId).filter(Boolean))];
-      await loadMachineDetails(machineIds);
-    } catch (err) {
-      console.error("Error loading bookings:", err);
-      setError("Error loading bookings: " + err.message);
-      setBookings([]);
-    } finally {
-      setLoadingBookings(false);
-    }
-  }, [token, loadMachineDetails]);
-
-  useEffect(() => {
-    refreshBookings();
-  }, [refreshBookings]);
-
-  function formatDateTime(dateString) {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
-  function getStatusColor(status) {
-    switch (status) {
-      case "REQUESTED":
-        return { background: "#fff3cd", color: "#856404", border: "1px solid #ffc107" };
-      case "APPROVED":
-        return { background: "#d4edda", color: "#155724", border: "1px solid #28a745" };
-      case "REJECTED":
-        return { background: "#f8d7da", color: "#721c24", border: "1px solid #dc3545" };
-      case "CANCELLED":
-        return { background: "#e2e3e5", color: "#383d41", border: "1px solid #6c757d" };
-      case "COMPLETED":
-        return { background: "#cce5ff", color: "#004085", border: "1px solid #007bff" };
-      default:
-        return { background: "#f0f0f0", color: "#333", border: "1px solid #ccc" };
-    }
-  }
 
   const containerStyle = {
     minHeight: "100vh",
@@ -178,22 +83,6 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
     marginLeft: "0.5rem",
   };
 
-  const bookingCardStyle = {
-    background: "rgba(255, 255, 255, 0.7)",
-    padding: "1.25rem",
-    marginBottom: "1rem",
-    borderRadius: "12px",
-    border: "1px solid rgba(73, 163, 166, 0.3)",
-  };
-
-  const errorStyle = {
-    color: "#08182b",
-    background: "rgba(255, 200, 200, 0.8)",
-    padding: "1rem",
-    borderRadius: "8px",
-    marginBottom: "1rem",
-    border: "1px solid rgba(255, 150, 150, 0.5)",
-  };
 
   const providerCtaStyle = {
     padding: "0.9rem 1.5rem",
@@ -323,116 +212,7 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
         )}
 
         <div style={cardStyle}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "1.5rem",
-              flexWrap: "wrap",
-              gap: "1rem",
-            }}
-          >
-            <div>
-              <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#08182b" }}>My Rentals</h2>
-              <p style={{ margin: "0.5rem 0 0 0", color: "#124e66", fontSize: "0.9rem" }}>
-                Track the status of your booking requests and completed rentals.
-              </p>
-            </div>
-            <button
-              onClick={refreshBookings}
-              disabled={loadingBookings}
-              style={{
-                padding: "0.75rem 1.5rem",
-                borderRadius: "8px",
-                border: "none",
-                fontSize: "1rem",
-                fontWeight: "600",
-                cursor: loadingBookings ? "not-allowed" : "pointer",
-                transition: "all 0.3s ease",
-                background: loadingBookings
-                  ? "#49a3a6"
-                  : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-                color: "#ffffff",
-                boxShadow: loadingBookings ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
-                opacity: loadingBookings ? 0.6 : 1,
-              }}
-            >
-              {loadingBookings ? "Loading..." : "🔄 Refresh"}
-            </button>
-          </div>
-
-          {error && <div style={errorStyle}>{error}</div>}
-
-          {!loadingBookings && bookings.length === 0 && !error && (
-            <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
-              You haven't made any bookings yet.
-            </p>
-          )}
-
-          {bookings.length > 0 && (
-            <div>
-              {bookings.map((booking) => {
-                const machine = machines[booking.machineId];
-                const statusStyle = getStatusColor(booking.status);
-
-                return (
-                  <div key={booking.id} style={bookingCardStyle}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        flexWrap: "wrap",
-                        gap: "1rem",
-                      }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "1rem",
-                            marginBottom: "0.75rem",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#08182b" }}>
-                            {machine ? machine.name : booking.machineName || "Unknown machine"}
-                          </h3>
-                          <span
-                            style={{
-                              ...statusStyle,
-                              padding: "0.25rem 0.75rem",
-                              borderRadius: "20px",
-                              fontSize: "0.875rem",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {booking.status}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: "0.9rem", color: "#124e66", marginBottom: "0.5rem" }}>
-                          <div>
-                            <strong>Start:</strong> {formatDateTime(booking.startTime)}
-                          </div>
-                          <div>
-                            <strong>End:</strong> {formatDateTime(booking.endTime)}
-                          </div>
-                        </div>
-                        {machine && (
-                          <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
-                            📍 {machine.location || "N/A"}
-                            {machine.price && ` • 💰 $${machine.price.toFixed(2)}/hour`}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <TenantBookings token={token} />
         </div>
       </div>
     </div>

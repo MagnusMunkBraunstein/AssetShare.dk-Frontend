@@ -85,8 +85,10 @@ function App() {
     const role = await fetchUserRole(tokenFromApi, emailFromApi);
     if (role) {
       setUserRole(role);
+      setCurrentPage(pageForRole(role));
+    } else {
+      resetAuthState();
     }
-    setCurrentPage(pageForRole(role));
   }
 
   function handleRegisterSuccess() {
@@ -187,6 +189,7 @@ function App() {
         userEmail={userEmail}
         onLogout={handleLogout}
         onNavigateToLanding={() => setCurrentPage("landing")}
+        onSwitchToProvider={() => setCurrentPage("home")}
       />
     );
   }

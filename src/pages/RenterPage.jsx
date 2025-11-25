@@ -4,7 +4,7 @@ import RentalProviderRegistration from "../components/RentalProviderRegistration
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function RenterPage({ token, userEmail, onLogout, onNavigateToLanding }) {
+export default function RenterPage({ token, userEmail, onLogout, onNavigateToLanding, onSwitchToProvider }) {
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -216,6 +216,9 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
       setUserRole(userData.role);
     }
     setShowProviderForm(false);
+    if (userData?.role && ["BOTH", "UDLEJER"].includes(userData.role) && onSwitchToProvider) {
+      onSwitchToProvider();
+    }
   };
 
   if (!token) {

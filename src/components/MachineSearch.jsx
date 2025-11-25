@@ -119,20 +119,13 @@ export default function MachineSearch({ token }) {
     background: loading
       ? "#49a3a6"
       : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-    color: "#9adbd6",
+    color: "#ffffff",
     boxShadow: loading
       ? "none"
       : "0 4px 15px rgba(31, 111, 120, 0.4)",
     marginRight: "0.75rem",
     marginBottom: "0.75rem",
     opacity: loading ? 0.6 : 1,
-  };
-
-  const secondaryButtonStyle = {
-    ...buttonStyle,
-    background: loading ? "#49a3a6" : "#49a3a6",
-    color: loading ? "#9adbd6" : "#08182b",
-    boxShadow: loading ? "none" : "0 4px 15px rgba(73, 163, 166, 0.3)",
   };
 
   const errorStyle = {
@@ -191,7 +184,7 @@ export default function MachineSearch({ token }) {
     cursor: "pointer",
     transition: "all 0.3s ease",
     background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-    color: "#9adbd6",
+    color: "#ffffff",
     boxShadow: "0 4px 15px rgba(31, 111, 120, 0.4)",
     marginTop: "0.75rem",
   };
@@ -296,7 +289,7 @@ export default function MachineSearch({ token }) {
         <button
           onClick={loadAllMachines}
           disabled={loading}
-          style={secondaryButtonStyle}
+          style={buttonStyle}
             onMouseEnter={(e) => {
               if (!loading) {
                 e.currentTarget.style.transform = "translateY(-2px)";
@@ -342,13 +335,18 @@ export default function MachineSearch({ token }) {
                     <span style={infoLabelStyle}>💰 Price:</span>
                     {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
                   </div>
-                  {machine.ownerId && (
+                  {machine.ownerName && (
                     <div style={infoItemStyle}>
-                      <span style={infoLabelStyle}>👤 Owner ID:</span>
-                      {machine.ownerId}
+                      <span style={infoLabelStyle}>👤 Owner:</span>
+                      {machine.ownerName}
                     </div>
                   )}
                 </div>
+                {machine.instantBookingEnabled && (
+                  <div style={{ marginTop: "0.5rem", color: "#1f6f78", fontWeight: "600" }}>
+                    ⚡ Instant booking available — no manual approval needed.
+                  </div>
+                )}
                 {token && (
                   <button
                     onClick={() => setSelectedMachine(machine)}
@@ -362,7 +360,7 @@ export default function MachineSearch({ token }) {
                       e.currentTarget.style.boxShadow = "0 4px 15px rgba(31, 111, 120, 0.4)";
                     }}
                   >
-                    📅 Book This Machine
+                    {machine.instantBookingEnabled ? "⚡ Instant Book" : "📅 Book This Machine"}
                   </button>
                 )}
               </div>

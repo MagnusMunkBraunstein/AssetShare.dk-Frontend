@@ -268,7 +268,7 @@ export default function MyBookings({ token }) {
             background: loading
               ? "#49a3a6"
               : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-            color: "#9adbd6",
+            color: "#ffffff",
             boxShadow: loading
               ? "none"
               : "0 4px 15px rgba(31, 111, 120, 0.4)",
@@ -299,7 +299,7 @@ export default function MyBookings({ token }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
                       <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#08182b" }}>
-                        {machine ? machine.name : `Machine ${booking.machineId?.substring(0, 8)}...`}
+                        {machine ? machine.name : booking.machineName || "Unknown machine"}
                       </h3>
                       <span
                         style={{
@@ -329,7 +329,7 @@ export default function MyBookings({ token }) {
                         <strong>End:</strong> {formatDateTime(booking.endTime)}
                       </div>
                       <div>
-                        <strong>Renter ID:</strong> {booking.renterId?.substring(0, 8)}...
+                        <strong>Renter:</strong> {booking.renterName || "Unknown renter"}
                       </div>
                     </div>
                   </div>

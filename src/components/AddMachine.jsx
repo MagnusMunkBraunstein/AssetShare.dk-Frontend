@@ -7,6 +7,7 @@ export default function AddMachine({ token, onMachineAdded }) {
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
   const [price, setPrice] = useState("");
+  const [instantBookingEnabled, setInstantBookingEnabled] = useState(false);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -41,6 +42,7 @@ export default function AddMachine({ token, onMachineAdded }) {
           category,
           location,
           price: parseFloat(price),
+          instantBookingEnabled,
         }),
       });
 
@@ -56,6 +58,7 @@ export default function AddMachine({ token, onMachineAdded }) {
       setCategory("");
       setLocation("");
       setPrice("");
+      setInstantBookingEnabled(false);
 
       if (onMachineAdded) {
         onMachineAdded(data);
@@ -230,6 +233,20 @@ export default function AddMachine({ token, onMachineAdded }) {
             required
             disabled={loading}
           />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Instant Booking</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#124e66", fontSize: "0.9rem" }}>
+            <input
+              type="checkbox"
+              checked={instantBookingEnabled}
+              onChange={(e) => setInstantBookingEnabled(e.target.checked)}
+              disabled={loading}
+              style={{ width: "1rem", height: "1rem" }}
+            />
+            <span>Allow renters to auto-confirm bookings once payment succeeds.</span>
+          </div>
         </div>
 
         <button

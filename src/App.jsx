@@ -48,15 +48,25 @@ function App() {
     return null;
   }
 
+  function resetAuthState() {
+    setToken(null);
+    setUserEmail(null);
+    setUserRole(null);
+    setCurrentPage("landing");
+  }
+
   useEffect(() => {
     async function refreshRole() {
       if (token && userEmail) {
         const role = await fetchUserRole(token, userEmail);
         if (role) {
           setUserRole(role);
+        } else {
+          console.warn("Stored credentials invalid, clearing session");
+          resetAuthState();
         }
       } else {
-        setUserRole(null);
+        resetAuthState();
       }
     }
     refreshRole();
@@ -93,10 +103,7 @@ function App() {
       console.warn("Logout request failed", err);
     }
 
-    setToken(null);
-    setUserEmail(null);
-    setUserRole(null);
-    setCurrentPage("landing");
+    resetAuthState();
   }
 
   async function handleNavigateToDashboard() {
@@ -111,7 +118,8 @@ function App() {
         setCurrentPage(pageForRole(role));
         return;
       }
-      setCurrentPage("home");
+      console.warn("Unable to resolve user role, clearing session");
+      resetAuthState();
       return;
     }
     setCurrentPage(pageForRole(userRole));

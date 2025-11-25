@@ -43,6 +43,7 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
       setSuccess(true);
       setCvr("");
       setCompanyName("");
+      setFoundCompany(null);
       
       if (onRegistrationSuccess) {
         onRegistrationSuccess(data);
@@ -93,7 +94,7 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
     background: loading
       ? "rgba(31, 111, 120, 0.5)"
       : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-    color: "#9adbd6",
+    color: "#ffffff",
     boxShadow: loading ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
     opacity: loading ? 0.6 : 1,
   };
@@ -150,8 +151,8 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
               value={cvr}
               onChange={(e) => {
                 setCvr(e.target.value);
-                setFoundCompany(null); // Clear found company when CVR changes
-                setCompanyName(""); // Clear company name when CVR changes
+                setFoundCompany(null);
+                setCompanyName("");
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "#49a3a6";
@@ -169,20 +170,25 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
             <button
               type="button"
               onClick={async () => {
-                if (!cvr || !cvr.match(/^\d{8}$/)) {
-                  setMsg("Please enter a valid 8-digit CVR number");
+                const normalized = (cvr || "").trim();
+                if (!normalized) {
+                  setMsg("Please enter a CVR number");
                   return;
                 }
                 setMsg("");
                 setSearching(true);
                 setFoundCompany(null);
                 try {
-                  const res = await fetch(`${API_BASE}/cvr/${cvr}`, {
+                  setCvr(normalized);
+                  const endpoint = /^\d{8}$/.test(normalized)
+                    ? `${API_BASE}/cvr/${normalized}`
+                    : `${API_BASE}/cvr/search?query=${encodeURIComponent(normalized)}`;
+                  const res = await fetch(endpoint, {
                     method: "GET",
                     headers: {
                       "Content-Type": "application/json",
                     },
-                    credentials: "omit", // Don't send cookies/credentials
+                    credentials: "omit",
                   });
                   if (!res.ok) {
                     const text = await res.text();
@@ -190,9 +196,19 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
                     return;
                   }
                   const data = await res.json();
-                  if (data.name) {
+                  if (Array.isArray(data)) {
+                    if (data.length > 0) {
+                      setFoundCompany(data[0]);
+                      setCompanyName(data[0].name || "");
+                      setCvr(data[0].vat || normalized);
+                      setMsg("");
+                    } else {
+                      setMsg("No companies found for this search");
+                    }
+                  } else if (data?.name) {
                     setFoundCompany(data);
                     setCompanyName(data.name);
+                    setCvr(data.vat || normalized);
                     setMsg("");
                   } else {
                     setMsg("No company found for this CVR number");
@@ -229,7 +245,9 @@ export default function RentalProviderRegistration({ token, onRegistrationSucces
               border: "1px solid rgba(150, 255, 150, 0.5)",
             }}>
               <strong style={{ color: "#08182b" }}>✓ Found:</strong>{" "}
-              <span style={{ color: "#124e66" }}>{foundCompany.name}</span>
+              <span style={{ color: "#124e66" }}>
+                {foundCompany.name} ({foundCompany.vat})
+              </span>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import MachineSearch from "../components/MachineSearch";
+import RentalProviderRegistration from "../components/RentalProviderRegistration";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -10,6 +11,7 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
   const [machines, setMachines] = useState({});
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [error, setError] = useState("");
+  const [showProviderForm, setShowProviderForm] = useState(false);
 
   useEffect(() => {
     async function loadCurrentUserName() {
@@ -193,6 +195,29 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
     border: "1px solid rgba(255, 150, 150, 0.5)",
   };
 
+  const providerCtaStyle = {
+    padding: "0.9rem 1.5rem",
+    borderRadius: "8px",
+    border: "none",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#ffffff",
+    boxShadow: "0 4px 15px rgba(31, 111, 120, 0.4)",
+  };
+
+  const handleRentalProviderSuccess = (userData) => {
+    if (userData?.name) {
+      setUserName(userData.name);
+    }
+    if (userData?.role) {
+      setUserRole(userData.role);
+    }
+    setShowProviderForm(false);
+  };
+
   if (!token) {
     return (
       <div style={containerStyle}>
@@ -259,6 +284,40 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
           </p>
           <MachineSearch token={token} />
         </div>
+
+        {userRole === "LEJER" && (
+          <div style={cardStyle}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "1rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <div>
+                <h2 style={{ margin: 0, color: "#08182b" }}>Ready to rent out your machines?</h2>
+                <p style={{ margin: "0.5rem 0 0 0", color: "#124e66" }}>
+                  Upgrade your LEJER account to a rental provider by validating your CVR number.
+                </p>
+              </div>
+              {!showProviderForm && (
+                <button style={providerCtaStyle} onClick={() => setShowProviderForm(true)}>
+                  Become a Rental Provider
+                </button>
+              )}
+            </div>
+
+            {showProviderForm && (
+              <RentalProviderRegistration
+                token={token}
+                onRegistrationSuccess={handleRentalProviderSuccess}
+              />
+            )}
+          </div>
+        )}
 
         <div style={cardStyle}>
           <div

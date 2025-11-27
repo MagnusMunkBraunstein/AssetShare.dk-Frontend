@@ -11,6 +11,14 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [stripeSummary, setStripeSummary] = useState(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState("");
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [cleanupMessage, setCleanupMessage] = useState("");
+
+  const normalizedRole = (userRole || "").toUpperCase();
+  const isAdmin = normalizedRole === "ADMIN";
 
   // Load current user's name
   useEffect(() => {
@@ -71,6 +79,88 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
       setLoading(false);
     }
   }, [token]);
+
+  // Load Stripe status
+  const loadStripeSummary = useCallback(async () => {
+    if (!token) return;
+
+    setStripeLoading(true);
+    setStripeError("");
+    setCleanupMessage("");
+
+    try {
+      const res = await fetch(`${API_BASE}/stripe/connect/admin-summary`, {
+        headers: {
+          Authorization: `Bearer ${token.trim()}`,
+        },
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 401 || res.status === 403) {
+          setStripeError("Session expired. Please log back in.");
+        } else {
+          setStripeError(text || "Failed to load Stripe summary");
+        }
+        setStripeSummary(null);
+        return;
+      }
+
+      const data = await res.json();
+      setStripeSummary(data);
+    } catch (err) {
+      console.error("Error loading Stripe summary:", err);
+      setStripeError("Error loading Stripe summary: " + err.message);
+      setStripeSummary(null);
+    } finally {
+      setStripeLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      loadStripeSummary();
+    }
+  }, [token, loadStripeSummary]);
+
+  async function handleCleanupAccounts() {
+    if (!isAdmin) return;
+
+    const confirmed = window.confirm(
+      "This will delete all Stripe Connect accounts that are not fully enabled. Only use this for cleanup. Continue?"
+    );
+    if (!confirmed) return;
+
+    setCleanupLoading(true);
+    setCleanupMessage("");
+    setStripeError("");
+
+    try {
+      const res = await fetch(`${API_BASE}/stripe/connect/cleanup-orphaned-accounts`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token.trim()}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setStripeError(data.error || "Failed to cleanup Stripe accounts");
+        return;
+      }
+
+      const data = await res.json();
+      setCleanupMessage(
+        `Cleanup completed. Deleted: ${data.deletedCount || 0}, Failed: ${data.failedCount || 0}, Kept: ${data.skippedCount || 0}`
+      );
+      loadStripeSummary();
+    } catch (err) {
+      console.error("Error cleaning up Stripe accounts:", err);
+      setStripeError("Error cleaning up Stripe accounts: " + err.message);
+    } finally {
+      setCleanupLoading(false);
+    }
+  }
 
   // Load users on component mount
   useEffect(() => {
@@ -441,6 +531,99 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
             <div style={statValueStyle}>{roleCounts.ADMIN}</div>
             <div style={statLabelStyle}>Admins</div>
           </div>
+        </div>
+
+        {/* Stripe Connect Overview */}
+        <div style={cardStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#08182b" }}>Stripe Connect Status</h2>
+              <p style={{ margin: "0.5rem 0 0 0", color: "#124e66", fontSize: "0.9rem" }}>
+                Platform-wide overview of connected accounts and admin-only maintenance actions.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button
+                onClick={loadStripeSummary}
+                disabled={stripeLoading}
+                style={{
+                  ...secondaryButtonStyle,
+                  background: stripeLoading
+                    ? "#49a3a6"
+                    : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                }}
+              >
+                {stripeLoading ? "Refreshing..." : "🔄 Refresh Status"}
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={handleCleanupAccounts}
+                  disabled={cleanupLoading}
+                  style={{
+                    ...buttonStyle,
+                    background: "linear-gradient(135deg, #d32f2f 0%, #f44336 100%)",
+                    color: "#fff",
+                    opacity: cleanupLoading ? 0.7 : 1,
+                  }}
+                >
+                  {cleanupLoading ? "Cleaning..." : "🧹 Cleanup Accounts"}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {stripeError && <div style={errorStyle}>{stripeError}</div>}
+          {cleanupMessage && (
+            <div
+              style={{
+                color: "#155724",
+                background: "rgba(76, 175, 80, 0.15)",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                marginBottom: "1rem",
+                border: "1px solid rgba(76, 175, 80, 0.3)",
+              }}
+            >
+              {cleanupMessage}
+            </div>
+          )}
+
+          {stripeSummary ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+              <div style={statCardStyle}>
+                <div style={statLabelStyle}>Total Accounts</div>
+                <div style={statValueStyle}>{stripeSummary.totalAccounts}</div>
+              </div>
+              <div style={statCardStyle}>
+                <div style={statLabelStyle}>Charges Enabled</div>
+                <div style={statValueStyle}>{stripeSummary.chargesEnabled}</div>
+              </div>
+              <div style={statCardStyle}>
+                <div style={statLabelStyle}>Payouts Enabled</div>
+                <div style={statValueStyle}>{stripeSummary.payoutsEnabled}</div>
+              </div>
+              <div style={statCardStyle}>
+                <div style={statLabelStyle}>Details Submitted</div>
+                <div style={statValueStyle}>{stripeSummary.detailsSubmitted}</div>
+              </div>
+              <div style={statCardStyle}>
+                <div style={statLabelStyle}>Fully Enabled</div>
+                <div style={statValueStyle}>{stripeSummary.fullyEnabled}</div>
+              </div>
+              <div style={statCardStyle}>
+                <div style={statLabelStyle}>Pending Accounts</div>
+                <div style={statValueStyle}>{stripeSummary.pendingAccounts}</div>
+              </div>
+            </div>
+          ) : (
+            !stripeLoading && (
+              <p style={{ color: "#124e66", fontStyle: "italic" }}>
+                Stripe summary not available. Click "Refresh Status" to load data.
+              </p>
+            )
+          )}
         </div>
 
         {/* Users Overview */}

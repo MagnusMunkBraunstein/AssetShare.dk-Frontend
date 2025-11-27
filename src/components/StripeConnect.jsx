@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function StripeConnect({ token, showAdminTools = false }) {
+export default function StripeConnect({ token }) {
   const [accountStatus, setAccountStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -379,35 +379,34 @@ export default function StripeConnect({ token, showAdminTools = false }) {
         Connect your Stripe account to receive payments when people rent your machines.
       </p>
 
-      {showAdminTools && (
-        <div style={{ marginBottom: "1rem", padding: "0.75rem", background: "rgba(255, 193, 7, 0.1)", borderRadius: "8px", border: "1px solid rgba(255, 193, 7, 0.3)" }}>
-          <p style={{ margin: "0 0 0.5rem 0", fontSize: "0.85rem", color: "#856404" }}>
-            <strong>Admin Tools:</strong> Clean up test accounts that aren't fully enabled
-          </p>
-          <button
-            onClick={cleanupOrphanedAccounts}
-            disabled={loading}
-            style={{
-              ...buttonStyle,
-              background: "rgba(255, 193, 7, 0.3)",
-              color: "#856404",
-              fontSize: "0.9rem",
-              padding: "0.5rem 1rem",
-              marginRight: "0",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.background = "rgba(255, 193, 7, 0.5)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 193, 7, 0.3)";
-            }}
-          >
-            {loading ? "Cleaning up..." : "Cleanup Accounts"}
-          </button>
-        </div>
-      )}
+      {/* Cleanup button for admin/testing - always visible */}
+      <div style={{ marginBottom: "1rem", padding: "0.75rem", background: "rgba(255, 193, 7, 0.1)", borderRadius: "8px", border: "1px solid rgba(255, 193, 7, 0.3)" }}>
+        <p style={{ margin: "0 0 0.5rem 0", fontSize: "0.85rem", color: "#856404" }}>
+          <strong>Admin Tools:</strong> Clean up test accounts that aren't fully enabled
+        </p>
+        <button
+          onClick={cleanupOrphanedAccounts}
+          disabled={loading}
+          style={{
+            ...buttonStyle,
+            background: "rgba(255, 193, 7, 0.3)",
+            color: "#856404",
+            fontSize: "0.9rem",
+            padding: "0.5rem 1rem",
+            marginRight: "0",
+          }}
+          onMouseEnter={(e) => {
+            if (!loading) {
+              e.currentTarget.style.background = "rgba(255, 193, 7, 0.5)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255, 193, 7, 0.3)";
+          }}
+        >
+          {loading ? "Cleaning up..." : "Cleanup Accounts"}
+        </button>
+      </div>
 
       {error && <div style={errorStyle}>{error}</div>}
       {message && <div style={messageStyle}>{message}</div>}

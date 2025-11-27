@@ -1,0 +1,42 @@
+* [33m7c983c7[m[33m ([m[1;31morigin/Calender-for-Makine[m[33m)[m Refactor App and ProviderPage components to enhance user navigation and improve code readability. Replace HomePage with RenterPage in App, and update state management for edit and add forms in ProviderPage for better clarity. Introduce contract download button in RenterPage for approved bookings, improving user experience.
+*   [33ma3a8cfd[m Merge branch 'Calender-for-Makine' of https://github.com/MagnusMunkBraunstein/AssetShare.dk-Frontend into Calender-for-Makine
+[32m|[m[33m\[m  
+[32m|[m * [33m9ab8435[m Pdfsystem adjust
+* [33m|[m   [33m4a0694f[m Merge branch 'feature/edit-machine+ui-overhaul' into Calender-for-Makine
+[33m|[m[35m\[m [33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+* [35m|[m [33m0e0e091[m Add calendar functionality and booking system to MachineSearch component
+* [35m|[m [33medeecf0[m Makine
+[35m|[m [35m|[m * [33mcdeb46f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mCalender-for-Makine[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Update TenantBookings component to enhance user experience by changing language from Danish to English. Adjusted date formatting, booking status messages, and button labels for clarity. Improved consistency in terminology and styling across the component.
+[35m|[m [35m|[m *   [33m7c4191d[m Merge branch 'main' of https://github.com/MagnusMunkBraunstein/AssetShare.dk-Frontend
+[35m|[m [35m|[m [1;31m|[m[1;32m\[m  
+[35m|[m [35m|[m [1;31m|[m * [33m0fe039c[m Enhance StripeConnect and AdminPage components by adding admin tools for cleanup of orphaned Stripe accounts. Introduce loading states and error handling for Stripe summary retrieval, improving user experience and functionality for admin users.
+[35m|[m [35m|[m * [1;32m|[m [33mb69ec3a[m Refactor status display in ProviderPage component for improved readability. Adjusted styling for status indication to enhance visual clarity based on machine status.
+[35m|[m [35m|[m [1;32m|[m[1;32m/[m  
+[35m|[m [35m|[m * [33mbabb8a2[m[33m ([m[1;32mmain[m[33m)[m Refactor RenterPage component by removing unused state and functions, and integrate TenantBookings component for improved booking management. This enhances code clarity and user experience by streamlining the display of tenant-specific bookings.
+[35m|[m [35m|[m *   [33mcf88172[m Merge remote-tracking branch 'origin/feature/edit-machine+ui-overhaul' into feature/stripe-fixes-renter-bookings
+[35m|[m [35m|[m [1;33m|[m[35m\[m  
+[35m|[m [35m|[m [1;33m|[m[35m/[m  
+[35m|[m [35m|[m[35m/[m[1;33m|[m   
+[35m|[m * [1;33m|[m [33mb67a28a[m Update text color in RegisterPage button for improved visibility, changing from #9adbd6 to #ffffff.
+[35m|[m * [1;33m|[m [33m311af77[m Refactor App and RenterPage components to improve user role handling and navigation. Update App to reset authentication state when user role is not found and adjust current page based on user role. Modify RenterPage to trigger navigation to provider page based on user role after registration.
+[35m|[m * [1;33m|[m [33m16c122f[m Update dependencies and enhance user session management. Upgrade @stripe/stripe-js to version 8.5.3. Refactor App component to improve authentication state handling and add resetAuthState function. Enhance RentalProviderRegistration with improved CVR validation and company search functionality. Introduce conditional rendering for rental provider registration in RenterPage based on user role.
+[35m|[m * [1;33m|[m [33m2daedf3[m Update button styles across multiple components to improve visibility and consistency. Change button text color from #9adbd6 to #ffffff in BookingRequest, MachineSearch, MyBookings, LoginPage, ProviderPage, and RenterPage. Refactor button styles in AdminPage and StripeConnect for better user experience.
+[35m|[m * [1;33m|[m [33m4767833[m Add user role management to AdminPage and RenterPage. Introduce userRole state to fetch and display the current user's role, enhancing the user interface with role badges. Update LandingPage button styles for improved visibility.
+[35m|[m * [1;33m|[m [33mad999fc[m Enhance BookingRequest component with new date formatting functions and improved handling of booking times. Update PaymentForm to include authToken for secure booking confirmation. Refactor MachineSearch and MyBookings components to display owner names instead of IDs, and improve user feedback on machine details. Introduce dashboard statistics for rental providers in ProviderPage, including total machines, current bookings, and revenue metrics.
+[35m|[m * [1;33m|[m [33m2cb7533[m Add instant booking feature across components. Update App to manage user roles and navigation based on role. Enhance AddMachine, BookingRequest, and ProviderPage to support instant booking functionality, including UI updates for user feedback.
+[35m|[m * [1;33m|[m [33m83e1ca9[m Update LandingPage button color and enhance ProviderPage with status management for machines. Add status field to edit and add forms, update API calls to fetch user-specific machines, and improve UI for status display.
+[35m|[m * [1;33m|[m [33m3c9a308[m Refactor App component to introduce new landing, provider, and admin pages. Update login success handling to redirect users based on their roles. Remove HomePage component and adjust navigation logic accordingly. Enhance RentalProviderRegistration with improved API call structure.
+[35m|[m [1;34m|[m * [33m2beb5cb[m Add return form functionality to TenantBookings component. Implement logic to display return form for completed bookings, including conditional rendering and state management for user interactions. Enhance user experience with visual cues and success messages upon form submission.
+[35m|[m [1;34m|[m * [33m468e97a[m Add TenantBookings component to HomePage for displaying tenant-specific bookings. Implement conditional rendering based on user roles (LEJER, BOTH, ADMIN) to enhance user experience and functionality.
+[35m|[m [1;34m|[m * [33me89cfa8[m Add cleanup functionality for orphaned Stripe Connect accounts in StripeConnect component. Implement user confirmation, error handling, and display of cleanup results. Introduce a dedicated button for admin use to trigger the cleanup process.
+[35m|[m [1;34m|[m * [33mcb2377b[m Implement Content Security Policy adjustments and enhance token handling in StripeConnect and BookingRequest components. Add error handling for session expiration and introduce account deletion functionality in StripeConnect. Update index.html to remove cached CSP meta tags.
+[35m|[m [1;34m|[m[1;34m/[m  
+[35m|[m * [33mdc13617[m Comment out unused useNavigate import in StripeConnectSuccessPage.jsx for potential future use.
+[35m|[m *   [33m8c0c88a[m Merge branch 'cvr-api-integration'
+[35m|[m [1;35m|[m[1;36m\[m  
+[35m|[m [1;35m|[m * [33m6754131[m Enhance BookingRequest component with detailed payment validation and postal code input. Replace CardElement with individual card elements for improved user experience. Update HomePage to include StripeConnect section for user roles with appropriate permissions.
+[35m|[m * [1;36m|[m [33m8610936[m Add user role display on HomePage. Introduce a role badge style to conditionally render the user's role alongside their email, enhancing the user interface and providing clearer role identification.
+[35m|[m [1;36m|[m[1;36m/[m  
+[35m|[m * [33mc4437e0[m Add booking functionality with Stripe integration. Introduce BookingRequest and MyBookings components for managing machine bookings. Update MachineSearch to allow booking requests and enhance HomePage to display user bookings. Include necessary dependencies for Stripe in package.json and package-lock.json.

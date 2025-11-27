@@ -623,17 +623,17 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                         </div>
                         <div>
                           <strong>Status:</strong>{" "}
-                          <span style={{
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "4px",
-                            fontSize: "0.85rem",
-                            fontWeight: "600",
+                              <span style={{
+                                padding: "0.25rem 0.5rem",
+                                borderRadius: "4px",
+                                fontSize: "0.85rem",
+                                fontWeight: "600",
                             background: machine.status === "ACTIVE" ? "#d4edda" : "#f8d7da",
                             color: machine.status === "ACTIVE" ? "#155724" : "#721c24",
                             border: machine.status === "ACTIVE" ? "1px solid #28a745" : "1px solid #dc3545"
-                          }}>
+                              }}>
                             {machine.status || "ACTIVE"}
-                          </span>
+                              </span>
                         </div>
                         <div>
                           <strong>Instant Booking:</strong>{" "}

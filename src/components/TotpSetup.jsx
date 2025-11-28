@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -9,7 +9,38 @@ export default function TotpSetup({ token }) {
   const [status, setStatus] = useState("idle"); // idle | setup | enabled | error
   const [error, setError] = useState("");
 
+  // Tjek på backend om TOTP allerede er slået til (f.eks. hvis rolle ændres efter opsætning)
+  useEffect(() => {
+    if (!token) return;
+
+    async function loadStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/auth/totp/status`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        if (data.enabled) {
+          setStatus("enabled");
+        }
+      } catch {
+        // Ignorér fejl her – vi vil bare ikke crashe UI'et
+      }
+    }
+
+    loadStatus();
+  }, [token]);
+
   if (!token) {
+    return null;
+  }
+
+  // Når 2-faktor er sat op, skal boksen være væk
+  if (status === "enabled") {
     return null;
   }
 
@@ -105,8 +136,16 @@ export default function TotpSetup({ token }) {
 
   return (
     <div style={cardStyle}>
-      <h3 style={{ marginTop: 0, marginBottom: "0.5rem", color: "#08182b" }}>
-        Google Authenticator (påkrævet)
+      <h3
+        style={{
+          marginTop: 0,
+          marginBottom: "0.5rem",
+          color: status === "idle" ? "#c62828" : "#08182b",
+        }}
+      >
+        {status === "idle"
+          ? "Opsæt Google Authenticator for at komme i gang"
+          : "Google Authenticator (påkrævet)"}
       </h3>
       <p style={infoStyle}>
         For at kunne lave og godkende bookinger, skal du aktivere 2-faktor login via Google
@@ -123,7 +162,28 @@ export default function TotpSetup({ token }) {
         <div style={{ marginTop: "0.75rem" }}>
           <p style={infoStyle}>
             1. Åbn Google Authenticator på din telefon.<br />
-            2. Tilføj en ny konto og brug denne <strong>hemmelige nøgle</strong> eller otpauth-link:
+            2. Scan denne QR-kode, eller indtast den hemmelige nøgle manuelt.
+          </p>
+
+          {otpauthUrl && (
+            <div style={{ margin: "0.75rem 0", textAlign: "center" }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                  otpauthUrl
+                )}`}
+                alt="Google Authenticator QR"
+                style={{
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+                  background: "white",
+                  padding: "0.5rem",
+                }}
+              />
+            </div>
+          )}
+
+          <p style={infoStyle}>
+            Hemmelig nøgle (til manuel indtastning hvis QR ikke virker):
           </p>
           <p
             style={{
@@ -135,13 +195,7 @@ export default function TotpSetup({ token }) {
               wordBreak: "break-all",
             }}
           >
-            Secret: {secret}
-          </p>
-          <p style={infoStyle}>
-            otpauth URL (kan bruges til at lave en QR-kode):<br />
-            <a href={otpauthUrl} style={{ wordBreak: "break-all", color: "#1f6f78" }}>
-              {otpauthUrl}
-            </a>
+            {secret}
           </p>
           <form onSubmit={enableTotp} style={{ marginTop: "0.75rem" }}>
             <label style={{ fontSize: "0.9rem", fontWeight: 600, color: "#08182b" }}>

@@ -25,7 +25,7 @@ export default function LoginPage({ onLoginSuccess, onSwitchToRegister }) {
       }
 
       const data = await res.json();
-      onLoginSuccess(data.token, email);
+      onLoginSuccess(data.token, data.email, data.role);
     } catch (err) {
       console.error(err);
       setMsg("Network error during login");

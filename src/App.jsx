@@ -55,22 +55,8 @@ function App() {
     setCurrentPage("landing");
   }
 
-  useEffect(() => {
-    async function refreshRole() {
-      if (token && userEmail) {
-        const role = await fetchUserRole(token, userEmail);
-        if (role) {
-          setUserRole(role);
-        } else {
-          // Hvis vi ikke kan hente rollen (midlertidig fejl), så behold nuværende login
-          console.warn("Unable to resolve user role, keeping current session");
-        }
-      } else {
-        resetAuthState();
-      }
-    }
-    refreshRole();
-  }, [token, userEmail]);
+  // Vi refresher ikke længere brugerrolle automatisk ved hver render,
+  // for at undgå at et midlertidigt fejl-kald logger brugeren ud eller flytter siden.
 
   function pageForRole(role) {
     if (role === "ADMIN") return "admin";
@@ -78,17 +64,12 @@ function App() {
     return "home";
   }
 
-  async function handleLoginSuccess(tokenFromApi, emailFromApi) {
+  function handleLoginSuccess(tokenFromApi, emailFromApi, roleFromApi) {
     setToken(tokenFromApi);
     setUserEmail(emailFromApi);
-    
-    const role = await fetchUserRole(tokenFromApi, emailFromApi);
-    if (role) {
-      setUserRole(role);
-      setCurrentPage(pageForRole(role));
-    } else {
-      resetAuthState();
-    }
+    const effectiveRole = roleFromApi || "LEJER";
+    setUserRole(effectiveRole);
+    setCurrentPage(pageForRole(effectiveRole));
   }
 
   function handleRegisterSuccess() {
@@ -113,18 +94,21 @@ function App() {
       setCurrentPage("login");
       return;
     }
-    if (!userRole) {
-      const role = await fetchUserRole(token, userEmail);
-      if (role) {
-        setUserRole(role);
-        setCurrentPage(pageForRole(role));
-        return;
-      }
-      console.warn("Unable to resolve user role, clearing session");
+
+    // Hent altid seneste rolle fra backend, så ændringer (fx LEJER -> UDLEJER)
+    // også slår igennem på landing page-knappen.
+    const role = await fetchUserRole(token, userEmail);
+    if (role) {
+      setUserRole(role);
+      setCurrentPage(pageForRole(role));
+    } else if (userRole) {
+      // Hvis vi ikke kan hente rollem, brug den vi har i forvejen
+      console.warn("Unable to resolve user role from backend, using cached role");
+      setCurrentPage(pageForRole(userRole));
+    } else {
+      console.warn("Unable to resolve user role and no cached role available");
       resetAuthState();
-      return;
     }
-    setCurrentPage(pageForRole(userRole));
   }
 
   let content;

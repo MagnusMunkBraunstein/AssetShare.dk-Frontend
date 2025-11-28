@@ -195,44 +195,22 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
       }
 
       if (paymentIntent && paymentIntent.status === "succeeded") {
-        // Create the booking now that payment has succeeded
+        // Payment succeeded: mark payment as paid for local development
         try {
-          const confirmRes = await fetch(`${API_BASE}/bookings/confirm-payment/${paymentIntentId}`, {
+          await fetch(`${API_BASE}/payments/test/mark-paid/${paymentIntentId}`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
           });
-
-          if (!confirmRes.ok) {
-            const text = await confirmRes.text();
-            setPaymentError("Payment succeeded but failed to create booking: " + text);
-            setProcessing(false);
-            if (onError) onError("Failed to create booking after payment");
-            return;
-          }
-
-          // For local development: also mark payment as paid (webhook would do this in production)
-          try {
-            await fetch(`${API_BASE}/payments/test/mark-paid/${paymentIntentId}`, {
-              method: "POST",
-            });
-          } catch (err) {
-            console.error("Error marking payment as paid:", err);
-            // Don't fail the booking if this fails - webhook will handle it in production
-          }
-
-          if (onSuccess) {
-            onSuccess({
-              paymentIntentId,
-              message: "Booking confirmed and payment processed successfully!",
-            });
-          }
         } catch (err) {
-          setPaymentError("Error confirming booking: " + err.message);
-          setProcessing(false);
-          if (onError) onError(err.message);
+          console.error("Error marking payment as paid:", err);
+          // Don't fail the booking if this fails - webhook will handle it in production
+        }
+
+        setProcessing(false);
+        if (onSuccess) {
+          onSuccess({
+            paymentIntentId,
+            message: "Payment processed successfully!",
+          });
         }
       }
     }

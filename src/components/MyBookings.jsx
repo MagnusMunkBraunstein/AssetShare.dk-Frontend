@@ -7,6 +7,7 @@ export default function MyBookings({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [machines, setMachines] = useState({}); // Cache machine details
+  const [downloadingContractId, setDownloadingContractId] = useState(null);
 
   async function loadBookings() {
     setLoading(true);
@@ -170,6 +171,51 @@ export default function MyBookings({ token }) {
       loadBookings();
     }
   }, [token]);
+
+  const downloadContract = async (booking) => {
+    if (!booking.contractId) {
+      setError("Kontrakten er ikke klar endnu for denne booking.");
+      return;
+    }
+
+    if (!token) {
+      setError("Du skal være logget ind for at hente kontrakten.");
+      return;
+    }
+
+    try {
+      setError("");
+      setDownloadingContractId(booking.id);
+
+      const res = await fetch(`${API_BASE}/contracts/${booking.contractId}/pdf`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Failed to download contract PDF:", res.status, text);
+        setError("Kunne ikke hente kontrakten. Prøv igen, eller kontakt support.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `kontrakt-${booking.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading contract PDF:", err);
+      setError("Der skete en fejl under hentning af kontrakten.");
+    } finally {
+      setDownloadingContractId(null);
+    }
+  };
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "N/A";
@@ -363,6 +409,33 @@ export default function MyBookings({ token }) {
                         }}
                       >
                         ❌ Reject
+                      </button>
+                    </div>
+                  )}
+
+                  {booking.status === "APPROVED" && booking.contractId && (
+                    <div style={{ marginTop: "0.75rem" }}>
+                      <button
+                        onClick={() => downloadContract(booking)}
+                        style={{
+                          ...buttonStyle,
+                          background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+                          color: "#ffffff",
+                          boxShadow: "0 4px 12px rgba(31, 111, 120, 0.35)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 18px rgba(31, 111, 120, 0.5)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(31, 111, 120, 0.35)";
+                        }}
+                        disabled={downloadingContractId === booking.id}
+                      >
+                        {downloadingContractId === booking.id
+                          ? "Henter kontrakt (udlejer)..."
+                          : "Hent kontrakt som udlejer"}
                       </button>
                     </div>
                   )}

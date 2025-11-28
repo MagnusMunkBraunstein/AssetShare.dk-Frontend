@@ -32,6 +32,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [totpCode, setTotpCode] = useState("");
   const [stripePublishableKey, setStripePublishableKey] = useState(null);
   const [stripePromise, setStripePromise] = useState(null);
   const [paymentIntentData, setPaymentIntentData] = useState(null);
@@ -83,6 +84,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
         machineId: machine.id,
         startTime: withSeconds(startTime),
         endTime: withSeconds(endTime),
+        totpCode: totpCode || null,
       };
 
       // Ensure token is trimmed and valid
@@ -110,7 +112,9 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
         const text = await res.text();
         console.error("Booking request failed:", res.status, text);
         
-        if (res.status === 403) {
+        if (res.status === 403 && text.includes("Two-factor")) {
+          setError("Du skal have aktiveret Google Authenticator og indtaste en gyldig kode for at kunne booke.");
+        } else if (res.status === 403) {
           setError("Access denied. Your session may have expired. Please try logging out and logging back in.");
         } else if (res.status === 400 && text.includes("Stripe account")) {
           setError("This machine owner has not connected their Stripe account yet. Please contact the owner or try a different machine.");
@@ -459,6 +463,20 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
               style={inputStyle}
               required
               min={startTime || formatDateTimeInput(new Date())}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Google Authenticator kode (6 cifre)</label>
+            <input
+              type="text"
+              value={totpCode}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setTotpCode(value);
+              }}
+              style={inputStyle}
+              placeholder="123456"
             />
           </div>
 

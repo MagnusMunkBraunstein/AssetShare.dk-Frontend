@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import MachineSearch from "../components/MachineSearch";
 import RentalProviderRegistration from "../components/RentalProviderRegistration";
 import TenantBookings from "../components/TenantBookings";
+import TotpSetup from "../components/TotpSetup";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -168,6 +169,8 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
             </button>
           </div>
         </div>
+
+        <TotpSetup token={token} />
 
         <div style={cardStyle}>
           <h2 style={{ margin: "0 0 1rem 0", color: "#08182b" }}>Find Machines</h2>

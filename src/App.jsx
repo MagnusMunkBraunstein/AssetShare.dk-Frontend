@@ -62,8 +62,8 @@ function App() {
         if (role) {
           setUserRole(role);
         } else {
-          console.warn("Stored credentials invalid, clearing session");
-          resetAuthState();
+          // Hvis vi ikke kan hente rollen (midlertidig fejl), så behold nuværende login
+          console.warn("Unable to resolve user role, keeping current session");
         }
       } else {
         resetAuthState();

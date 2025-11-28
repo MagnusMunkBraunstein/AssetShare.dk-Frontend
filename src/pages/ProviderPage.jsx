@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import StripeConnect from "../components/StripeConnect";
+import TotpSetup from "../components/TotpSetup";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -486,6 +487,8 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
         {/* Rental Provider Dashboard - Show for BOTH and UDLEJER */}
         {isProviderRole && (
           <>
+            <TotpSetup token={token} />
+
             <div style={cardStyle}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
                 <div>
@@ -808,6 +811,10 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                               <button
                                 onClick={async () => {
+                                  const code = window.prompt("Bekræft godkendelse med Google Authenticator (6 cifre):");
+                                  if (code === null) {
+                                    return;
+                                  }
                                   try {
                                     const res = await fetch(`${API_BASE}/bookings/${booking.id}/approve`, {
                                       method: "POST",
@@ -815,6 +822,9 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                                         "Content-Type": "application/json",
                                         Authorization: `Bearer ${token}`,
                                       },
+                                      body: JSON.stringify({
+                                        totpCode: code,
+                                      }),
                                     });
                                     if (res.ok) {
                                       // Reload bookings

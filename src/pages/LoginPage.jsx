@@ -25,7 +25,7 @@ export default function LoginPage({ onLoginSuccess, onSwitchToRegister }) {
       }
 
       const data = await res.json();
-      onLoginSuccess(data.token, email);
+      onLoginSuccess(data.token, data.email, data.role);
     } catch (err) {
       console.error(err);
       setMsg("Network error during login");
@@ -88,7 +88,7 @@ export default function LoginPage({ onLoginSuccess, onSwitchToRegister }) {
     cursor: "pointer",
     transition: "all 0.3s ease",
     background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-    color: "#9adbd6",
+    color: "#ffffff",
     boxShadow: "0 4px 15px rgba(31, 111, 120, 0.4)",
     marginTop: "1rem",
   };

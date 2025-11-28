@@ -233,6 +233,29 @@ export default function MachineSearch({ token, renterId }) {
     transition: "all 0.3s ease",
   };
 
+  const bookButtonStyle = {
+    padding: "0.5rem 1rem",
+    borderRadius: "8px",
+    border: "none",
+    fontSize: "0.9rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#ffffff",
+    boxShadow: "0 4px 15px rgba(31, 111, 120, 0.4)",
+    marginTop: "0.75rem",
+  };
+
+  const successMessageStyle = {
+    background: "rgba(100, 200, 100, 0.8)",
+    color: "#08182b",
+    padding: "1rem",
+    borderRadius: "8px",
+    marginBottom: "1rem",
+    border: "1px solid rgba(100, 200, 100, 0.5)",
+  };
+
   return (
     <div>
       {/* Search form */}

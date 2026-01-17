@@ -1,9 +1,10 @@
 import { useState } from "react";
 import BookingRequest from "./BookingRequest";
+import StarRating from "./StarRating";
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function MachineSearch({ token, renterId }) {
+export default function MachineSearch({ token }) {
   const [machines, setMachines] = useState([]);
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -321,7 +322,23 @@ export default function MachineSearch({ token, renterId }) {
           <div>
             {machines.map((machine) => (
               <div key={machine.id} style={machineCardStyle}>
-                <div style={machineNameStyle}>{machine.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <div style={machineNameStyle}>{machine.name}</div>
+                  <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+                    {machine.averageMachineRating !== null && machine.averageMachineRating !== undefined && (
+                      <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
+                        <span style={{ fontWeight: "600", marginRight: "0.25rem" }}>Machine:</span>
+                        <StarRating rating={machine.averageMachineRating} count={machine.machineRatingCount} size="0.9rem" />
+                      </div>
+                    )}
+                    {machine.ownerAverageRating !== null && machine.ownerAverageRating !== undefined && (
+                      <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
+                        <span style={{ fontWeight: "600", marginRight: "0.25rem" }}>Owner:</span>
+                        <StarRating rating={machine.ownerAverageRating} count={machine.ownerRatingCount} size="0.9rem" />
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div style={machineInfoStyle}>
                   <div style={infoItemStyle}>
                     <span style={infoLabelStyle}>Category:</span>
@@ -333,7 +350,7 @@ export default function MachineSearch({ token, renterId }) {
                   </div>
                   <div style={infoItemStyle}>
                     <span style={infoLabelStyle}>💰 Price:</span>
-                    {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
+                    {machine.price ? `DKK ${machine.price.toFixed(2)}/hour` : "N/A"}
                   </div>
                   {machine.ownerName && (
                     <div style={infoItemStyle}>

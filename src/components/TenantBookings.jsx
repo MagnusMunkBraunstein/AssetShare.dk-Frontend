@@ -3,7 +3,7 @@ import ReturnForm from "./ReturnForm";
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function TenantBookings({ token }) {
+export default function TenantBookings({ token, userRole }) {
   const [ongoingBookings, setOngoingBookings] = useState([]);
   const [previousBookings, setPreviousBookings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -101,7 +101,7 @@ export default function TenantBookings({ token }) {
   const formatDateTime = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleString("da-DK", {
+    return date.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -185,12 +185,12 @@ export default function TenantBookings({ token }) {
 
   const downloadContract = async (booking) => {
     if (!booking.contractId) {
-      setError("Kontrakten er ikke klar endnu for denne booking.");
+      setError("The contract is not ready yet for this booking.");
       return;
     }
 
     if (!token) {
-      setError("Du skal være logget ind for at hente kontrakten.");
+      setError("You must be logged in to download the contract.");
       return;
     }
 
@@ -207,7 +207,7 @@ export default function TenantBookings({ token }) {
       if (!res.ok) {
         const text = await res.text();
         console.error("Failed to download contract PDF:", res.status, text);
-        setError("Kunne ikke hente kontrakten. Prøv igen, eller kontakt support.");
+        setError("Could not download the contract. Please try again, or contact support.");
         return;
       }
 
@@ -215,14 +215,14 @@ export default function TenantBookings({ token }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `kontrakt-${booking.id}.pdf`;
+      a.download = `contract-${booking.id}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Error downloading contract PDF:", err);
-      setError("Der skete en fejl under hentning af kontrakten.");
+      setError("An error occurred while downloading the contract.");
     } finally {
       setDownloadingContractId(null);
     }
@@ -237,7 +237,7 @@ export default function TenantBookings({ token }) {
       <div key={booking.id} style={bookingCardStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
           <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#08182b", flex: 1 }}>
-            {machine ? machine.name : `Maskine ${booking.machineId?.substring(0, 8)}...`}
+            {machine ? machine.name : `Machine ${booking.machineId?.substring(0, 8)}...`}
           </h3>
           <span
             style={{
@@ -255,7 +255,7 @@ export default function TenantBookings({ token }) {
         {machine && (
           <div style={{ fontSize: "0.9rem", color: "#124e66", marginBottom: "0.5rem" }}>
             📍 {machine.location || "N/A"}
-            {machine.price && ` • 💰 ${machine.price.toFixed(2)} kr/time`}
+            {machine.price && ` • 💰 DKK ${machine.price.toFixed(2)}/hour`}
           </div>
         )}
         
@@ -264,7 +264,7 @@ export default function TenantBookings({ token }) {
             <strong>Start:</strong> {formatDateTime(booking.startTime)}
           </div>
           <div>
-            <strong>Slut:</strong> {formatDateTime(booking.endTime)}
+            <strong>End:</strong> {formatDateTime(booking.endTime)}
           </div>
         </div>
 
@@ -295,8 +295,8 @@ export default function TenantBookings({ token }) {
               disabled={downloadingContractId === booking.id}
             >
               {downloadingContractId === booking.id
-                ? "Henter kontrakt (lejer)..."
-                : "Hent kontrakt som lejer"}
+                ? "Downloading contract (renter)..."
+                : "Download Contract as Renter"}
             </button>
           </div>
         )}
@@ -312,10 +312,10 @@ export default function TenantBookings({ token }) {
             }}
           >
             <div style={{ marginBottom: "0.5rem", fontWeight: "600" }}>
-              ⚠️ Booking afsluttet - Afleveringsformular påkrævet
+              ⚠️ Booking Ended - Return Form Required
             </div>
             <p style={{ margin: "0 0 0.75rem 0", fontSize: "0.9rem" }}>
-              Din booking er afsluttet. Udfyld venligst afleveringsformularen for at aflevere maskinen digitalt.
+              Your booking has ended. Please fill out the return form to digitally return the machine.
             </p>
             <button
               onClick={() => handleOpenReturnForm(booking)}
@@ -339,7 +339,7 @@ export default function TenantBookings({ token }) {
                 e.currentTarget.style.boxShadow = "none";
               }}
             >
-              Udfyld afleveringsformular
+              Fill Return Form
             </button>
           </div>
         )}
@@ -355,7 +355,7 @@ export default function TenantBookings({ token }) {
               fontSize: "0.9rem",
             }}
           >
-            ✅ Afleveringsformular indsendt
+            ✅ Return form submitted
           </div>
         )}
       </div>
@@ -367,10 +367,10 @@ export default function TenantBookings({ token }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#08182b" }}>
-            Mine Bookinger
+            My Bookings
           </h2>
           <p style={{ margin: "0.5rem 0 0 0", color: "#124e66", fontSize: "0.9rem" }}>
-            Se dine igangværende og tidligere bookinger
+            View your ongoing and previous bookings
           </p>
         </div>
         <button
@@ -394,7 +394,7 @@ export default function TenantBookings({ token }) {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Indlæser..." : "🔄 Opdater"}
+          {loading ? "Loading..." : "🔄 Refresh"}
         </button>
       </div>
 
@@ -402,7 +402,7 @@ export default function TenantBookings({ token }) {
 
       {(ongoingBookings.length === 0 && previousBookings.length === 0 && !loading && !error) && (
         <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
-          Ingen bookinger fundet.
+          No bookings found.
         </p>
       )}
 
@@ -411,7 +411,7 @@ export default function TenantBookings({ token }) {
           {/* Ongoing Bookings Column */}
           <div style={columnStyle}>
             <h3 style={columnHeaderStyle}>
-              Igangværende Bookinger
+              Ongoing Bookings
               {ongoingBookings.length > 0 && (
                 <span style={{ fontSize: "0.9rem", fontWeight: "400", color: "#124e66", marginLeft: "0.5rem" }}>
                   ({ongoingBookings.length})
@@ -420,7 +420,7 @@ export default function TenantBookings({ token }) {
             </h3>
             {ongoingBookings.length === 0 ? (
               <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "1rem" }}>
-                Ingen igangværende bookinger
+                No ongoing bookings
               </p>
             ) : (
               ongoingBookings.map(renderBookingCard)
@@ -430,7 +430,7 @@ export default function TenantBookings({ token }) {
           {/* Previous Bookings Column */}
           <div style={columnStyle}>
             <h3 style={columnHeaderStyle}>
-              Tidligere Bookinger
+              Previous Bookings
               {previousBookings.length > 0 && (
                 <span style={{ fontSize: "0.9rem", fontWeight: "400", color: "#124e66", marginLeft: "0.5rem" }}>
                   ({previousBookings.length})
@@ -439,7 +439,7 @@ export default function TenantBookings({ token }) {
             </h3>
             {previousBookings.length === 0 ? (
               <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "1rem" }}>
-                Ingen tidligere bookinger
+                No previous bookings
               </p>
             ) : (
               previousBookings.map(renderBookingCard)
@@ -451,7 +451,7 @@ export default function TenantBookings({ token }) {
       {showReturnForm && selectedBooking && (
         <ReturnForm
           bookingId={selectedBooking.id}
-          machineName={machines[selectedBooking.machineId]?.name || "Maskine"}
+          machineName={machines[selectedBooking.machineId]?.name || "Machine"}
           onClose={() => {
             setShowReturnForm(false);
             setSelectedBooking(null);

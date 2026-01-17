@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import StripeConnect from "../components/StripeConnect";
 import TotpSetup from "../components/TotpSetup";
+import StarRating from "../components/StarRating";
+import MyDetails from "../components/MyDetails";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -8,6 +10,8 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [userRating, setUserRating] = useState(null);
+  const [userRatingCount, setUserRatingCount] = useState(null);
   const [ownMachines, setOwnMachines] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [machinesMap, setMachinesMap] = useState({}); // Cache machine details
@@ -17,6 +21,8 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const [editFormData, setEditFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE", instantBookingEnabled: false });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddMachine, setShowAddMachine] = useState(false);
   const [addFormData, setAddFormData] = useState({ name: "", category: "", location: "", price: "", status: "ACTIVE", instantBookingEnabled: false });
   const [addLoading, setAddLoading] = useState(false);
@@ -25,6 +31,8 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
   const [dashboardStats, setDashboardStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState("");
+  const [activeBookingTab, setActiveBookingTab] = useState("requested"); // "requested", "approved", "completed"
+  const [showMyDetails, setShowMyDetails] = useState(false);
   const isProviderRole = userRole === "BOTH" || userRole === "UDLEJER";
 
 
@@ -48,6 +56,15 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
             setUserName(currentUser.name);
             setUserRole(currentUser.role);
             setUserId(currentUser.id);
+            // Convert rating to number if it's a string, preserve null if not present
+            const rating = currentUser.averageRating != null && currentUser.averageRating !== undefined 
+              ? (typeof currentUser.averageRating === 'string' ? parseFloat(currentUser.averageRating) : Number(currentUser.averageRating))
+              : null;
+            const count = currentUser.ratingCount != null && currentUser.ratingCount !== undefined
+              ? (typeof currentUser.ratingCount === 'string' ? parseInt(currentUser.ratingCount) : Number(currentUser.ratingCount))
+              : null;
+            setUserRating(rating);
+            setUserRatingCount(count);
           }
         }
       } catch (err) {
@@ -218,7 +235,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
     if (Number.isNaN(value)) {
       return "DKK 0.00";
     }
-    return `DKK ${value.toLocaleString("da-DK", {
+    return `DKK ${value.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -350,8 +367,8 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
 
   const roleBadgeStyle = {
     display: "inline-block",
-    background: "#49a3a6",
-    color: "#f9fdff",
+    background: "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+    color: "#ffffff",
     padding: "0.25rem 0.75rem",
     borderRadius: "20px",
     fontSize: "0.85rem",
@@ -381,7 +398,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `kontrakt-${booking.id}.pdf`;
+      a.download = `contract-${booking.id}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -416,9 +433,16 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
             <h1 style={titleStyle}>
               {(userRole === "BOTH" || userRole === "UDLEJER") ? "Rental Provider Dashboard" : "Welcome to AssetShare"}
             </h1>
-            <p style={subtitleStyle}>
+            <p style={{ ...subtitleStyle, display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
               Logged in as <strong style={{ color: "#1f6f78" }}>{userName || userEmail}</strong>
-              {userRole && <span style={roleBadgeStyle}>{userRole}</span>}
+              {userRole && userRole !== "ADMIN" && <span style={roleBadgeStyle}>{userRole}</span>}
+              {userRole && userRole !== "ADMIN" && (
+                userRating !== null && userRating !== undefined && !isNaN(userRating) ? (
+                  <StarRating rating={userRating} count={userRatingCount} size="0.9rem" />
+                ) : (
+                  <span style={{ fontSize: "0.9rem", color: "#999", fontStyle: "italic" }}>No rating received</span>
+                )
+              )}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -445,6 +469,31 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 }}
               >
                 🏠 Home
+              </button>
+            )}
+            {userRole && userRole !== "ADMIN" && (
+              <button
+                onClick={() => setShowMyDetails(true)}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  borderRadius: "8px",
+                  border: "2px solid #49a3a6",
+                  background: "white",
+                  color: "#1f6f78",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 15px rgba(73, 163, 166, 0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(73, 163, 166, 0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 15px rgba(73, 163, 166, 0.3)";
+                }}
+              >
+                My Details
               </button>
             )}
             <button
@@ -603,11 +652,29 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 </p>
               ) : ownMachines.length > 0 ? (
                 <div>
-                  {ownMachines.map((machine) => (
+                  {ownMachines.map((machine) => {
+                    // Parse machine rating values
+                    const machineRating = machine.averageMachineRating != null && machine.averageMachineRating !== undefined
+                      ? (typeof machine.averageMachineRating === 'string' ? parseFloat(machine.averageMachineRating) : Number(machine.averageMachineRating))
+                      : null;
+                    const machineRatingCount = machine.machineRatingCount != null && machine.machineRatingCount !== undefined
+                      ? (typeof machine.machineRatingCount === 'string' ? parseInt(machine.machineRatingCount) : Number(machine.machineRatingCount))
+                      : null;
+                    
+                    return (
                     <div key={machine.id} style={userCardStyle}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                        <div style={{ fontWeight: "600", color: "#08182b", fontSize: "1.1rem" }}>
-                          {machine.name}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: "600", color: "#08182b", fontSize: "1.1rem", marginBottom: "0.25rem" }}>
+                            {machine.name}
+                          </div>
+                          {machineRating !== null && machineRating !== undefined && !isNaN(machineRating) && machineRatingCount !== null && machineRatingCount > 0 ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                              <StarRating rating={machineRating} count={machineRatingCount} size="0.9rem" />
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.85rem", color: "#999", fontStyle: "italic" }}>No ratings yet</span>
+                          )}
                         </div>
                         <button
                           onClick={() => {
@@ -654,7 +721,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                           <strong>Location:</strong> {machine.location || "N/A"}
                         </div>
                         <div>
-                          <strong>Price:</strong> {machine.price ? `$${machine.price.toFixed(2)}` : "N/A"}
+                          <strong>Price:</strong> {machine.price ? `DKK ${machine.price.toFixed(2)}` : "N/A"}
                         </div>
                         <div>
                           <strong>Status:</strong>{" "}
@@ -676,7 +743,8 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               ) : (
                 <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
@@ -749,13 +817,126 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 </button>
               </div>
 
+              {/* Tab Navigation */}
+              <div style={{ 
+                display: "flex", 
+                gap: "0.5rem", 
+                marginBottom: "1.5rem", 
+                borderBottom: "2px solid rgba(73, 163, 166, 0.2)",
+                overflowX: "auto"
+              }}>
+                <button
+                  onClick={() => setActiveBookingTab("requested")}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "8px 8px 0 0",
+                    border: "none",
+                    borderBottom: activeBookingTab === "requested" ? "3px solid #1f6f78" : "3px solid transparent",
+                    fontSize: "0.95rem",
+                    fontWeight: activeBookingTab === "requested" ? "600" : "500",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    background: activeBookingTab === "requested" 
+                      ? "linear-gradient(135deg, rgba(31, 111, 120, 0.1) 0%, rgba(73, 163, 166, 0.1) 100%)"
+                      : "transparent",
+                    color: activeBookingTab === "requested" ? "#08182b" : "#124e66",
+                    whiteSpace: "nowrap"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeBookingTab !== "requested") {
+                      e.currentTarget.style.background = "rgba(73, 163, 166, 0.05)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeBookingTab !== "requested") {
+                      e.currentTarget.style.background = "transparent";
+                    }
+                  }}
+                >
+                  Requested ({allBookings.filter(b => b.status === "REQUESTED").length})
+                </button>
+                <button
+                  onClick={() => setActiveBookingTab("approved")}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "8px 8px 0 0",
+                    border: "none",
+                    borderBottom: activeBookingTab === "approved" ? "3px solid #1f6f78" : "3px solid transparent",
+                    fontSize: "0.95rem",
+                    fontWeight: activeBookingTab === "approved" ? "600" : "500",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    background: activeBookingTab === "approved" 
+                      ? "linear-gradient(135deg, rgba(31, 111, 120, 0.1) 0%, rgba(73, 163, 166, 0.1) 100%)"
+                      : "transparent",
+                    color: activeBookingTab === "approved" ? "#08182b" : "#124e66",
+                    whiteSpace: "nowrap"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeBookingTab !== "approved") {
+                      e.currentTarget.style.background = "rgba(73, 163, 166, 0.05)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeBookingTab !== "approved") {
+                      e.currentTarget.style.background = "transparent";
+                    }
+                  }}
+                >
+                  Approved / On-going ({allBookings.filter(b => b.status === "APPROVED").length})
+                </button>
+                <button
+                  onClick={() => setActiveBookingTab("completed")}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "8px 8px 0 0",
+                    border: "none",
+                    borderBottom: activeBookingTab === "completed" ? "3px solid #1f6f78" : "3px solid transparent",
+                    fontSize: "0.95rem",
+                    fontWeight: activeBookingTab === "completed" ? "600" : "500",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    background: activeBookingTab === "completed" 
+                      ? "linear-gradient(135deg, rgba(31, 111, 120, 0.1) 0%, rgba(73, 163, 166, 0.1) 100%)"
+                      : "transparent",
+                    color: activeBookingTab === "completed" ? "#08182b" : "#124e66",
+                    whiteSpace: "nowrap"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeBookingTab !== "completed") {
+                      e.currentTarget.style.background = "rgba(73, 163, 166, 0.05)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeBookingTab !== "completed") {
+                      e.currentTarget.style.background = "transparent";
+                    }
+                  }}
+                >
+                  Completed ({allBookings.filter(b => b.status === "COMPLETED").length})
+                </button>
+              </div>
+
               {loadingBookings ? (
                 <p style={{ color: "#124e66", textAlign: "center", padding: "2rem" }}>
                   Loading bookings...
                 </p>
-              ) : allBookings.length > 0 ? (
-                <div>
-                  {allBookings.map((booking) => {
+              ) : (() => {
+                // Filter bookings based on active tab
+                const filteredBookings = allBookings.filter((booking) => {
+                  if (activeBookingTab === "requested") {
+                    return booking.status === "REQUESTED";
+                  } else if (activeBookingTab === "approved") {
+                    return booking.status === "APPROVED";
+                  } else if (activeBookingTab === "completed") {
+                    return booking.status === "COMPLETED";
+                  }
+                  return false;
+                });
+
+                return filteredBookings.length > 0 ? (
+                  <div>
+                    {filteredBookings.map((booking) => {
                     const machine = machinesMap[booking.machineId];
                     const statusStyle = getStatusColor(booking.status);
                     const instantBookingEnabled = machine?.instantBookingEnabled;
@@ -784,7 +965,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                             {machine && (
                               <div style={{ fontSize: "0.9rem", color: "#124e66", marginBottom: "0.5rem" }}>
                                 📍 {machine.location || "N/A"}
-                                {machine.price && ` • 💰 $${machine.price.toFixed(2)}/day`}
+                                {machine.price && ` • 💰 DKK ${machine.price.toFixed(2)}/hour`}
                               </div>
                             )}
                             
@@ -811,7 +992,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                               <button
                                 onClick={async () => {
-                                  const code = window.prompt("Bekræft godkendelse med Google Authenticator (6 cifre):");
+                                  const code = window.prompt("Confirm approval with Google Authenticator (6 digits):");
                                   if (code === null) {
                                     return;
                                   }
@@ -934,7 +1115,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                                   e.currentTarget.style.boxShadow = "0 4px 12px rgba(31, 111, 120, 0.35)";
                                 }}
                               >
-                                Hent kontrakt som udlejer
+                                Download Contract as Provider
                               </button>
                             </div>
                           )}
@@ -942,12 +1123,15 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                       </div>
                     );
                   })}
-                </div>
-              ) : (
-                <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
-                  No bookings found for your machines.
-                </p>
-              )}
+                  </div>
+                ) : (
+                  <p style={{ color: "#124e66", fontStyle: "italic", textAlign: "center", padding: "2rem" }}>
+                    {activeBookingTab === "requested" && "No requested bookings found."}
+                    {activeBookingTab === "approved" && "No approved or ongoing bookings found."}
+                    {activeBookingTab === "completed" && "No completed bookings found."}
+                  </p>
+                );
+              })()}
             </div>
           </>
         )}
@@ -978,6 +1162,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
         }} onClick={() => {
           setEditingMachine(null);
           setEditError("");
+          setShowDeleteConfirm(false);
         }}>
           <div style={{
             background: "white",
@@ -997,6 +1182,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 onClick={() => {
                   setEditingMachine(null);
                   setEditError("");
+                  setShowDeleteConfirm(false);
                 }}
                 style={{
                   background: "none",
@@ -1149,7 +1335,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
 
               <div>
                 <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#08182b", fontSize: "0.9rem" }}>
-                  Price per Day (DKK) *
+                  Price per Hour (DKK) *
                 </label>
                 <input
                   style={{
@@ -1216,52 +1402,185 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem 1.5rem",
-                    borderRadius: "8px",
-                    border: "none",
-                    fontSize: "1rem",
-                    fontWeight: "600",
-                    cursor: editLoading ? "not-allowed" : "pointer",
-                    transition: "all 0.3s ease",
-                    background: editLoading
-                      ? "rgba(31, 111, 120, 0.5)"
-                      : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
-                    color: "#ffffff",
-                    boxShadow: editLoading ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
-                    opacity: editLoading ? 0.6 : 1,
-                  }}
-                  disabled={editLoading}
-                >
-                  {editLoading ? "Updating..." : "Update Machine"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingMachine(null);
-                    setEditError("");
-                  }}
-                  style={{
-                    padding: "0.75rem 1.5rem",
-                    borderRadius: "8px",
-                    border: "2px solid #49a3a6",
-                    fontSize: "1rem",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    background: "white",
-                    color: "#1f6f78",
-                    boxShadow: "0 4px 15px rgba(73, 163, 166, 0.3)",
-                  }}
-                  disabled={editLoading}
-                >
-                  Cancel
-                </button>
-              </div>
+              {showDeleteConfirm ? (
+                <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(255, 200, 200, 0.2)", borderRadius: "8px", border: "1px solid rgba(244, 67, 54, 0.3)" }}>
+                  <p style={{ margin: "0 0 1rem 0", color: "#721c24", fontWeight: "600" }}>
+                    ⚠️ Are you sure you want to delete this machine? This action cannot be undone.
+                  </p>
+                  <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!editingMachine) return;
+                        
+                        setDeleteLoading(true);
+                        setEditError("");
+                        
+                        try {
+                          const res = await fetch(`${API_BASE}/machines/${editingMachine.id}`, {
+                            method: "DELETE",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                          });
+
+                          if (!res.ok) {
+                            const text = await res.text();
+                            setEditError("Failed to delete machine: " + text);
+                            setDeleteLoading(false);
+                            return;
+                          }
+
+                          // Reload machines
+                          const machinesRes = await fetch(`${API_BASE}/machines/my-machines`, {
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                          });
+                          if (machinesRes.ok) {
+                            const myMachines = await machinesRes.json();
+                            setOwnMachines(myMachines);
+                          }
+
+                          setEditingMachine(null);
+                          setShowDeleteConfirm(false);
+                          setEditError("");
+                        } catch (err) {
+                          console.error(err);
+                          setEditError("Network error: " + err.message);
+                          setDeleteLoading(false);
+                        }
+                      }}
+                      style={{
+                        padding: "0.75rem 1.5rem",
+                        borderRadius: "8px",
+                        border: "none",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: deleteLoading ? "not-allowed" : "pointer",
+                        transition: "all 0.3s ease",
+                        background: deleteLoading
+                          ? "rgba(244, 67, 54, 0.5)"
+                          : "linear-gradient(135deg, #d32f2f 0%, #f44336 100%)",
+                        color: "#ffffff",
+                        boxShadow: deleteLoading ? "none" : "0 4px 15px rgba(211, 47, 47, 0.4)",
+                        opacity: deleteLoading ? 0.6 : 1,
+                      }}
+                      disabled={deleteLoading || editLoading}
+                    >
+                      {deleteLoading ? "Deleting..." : "Yes, Delete Machine"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setEditError("");
+                      }}
+                      style={{
+                        padding: "0.75rem 1.5rem",
+                        borderRadius: "8px",
+                        border: "2px solid #49a3a6",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                        background: "white",
+                        color: "#1f6f78",
+                        boxShadow: "0 4px 15px rgba(73, 163, 166, 0.3)",
+                      }}
+                      disabled={deleteLoading || editLoading}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+                    <button
+                      type="submit"
+                      style={{
+                        flex: 1,
+                        padding: "0.75rem 1.5rem",
+                        borderRadius: "8px",
+                        border: "none",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: editLoading ? "not-allowed" : "pointer",
+                        transition: "all 0.3s ease",
+                        background: editLoading
+                          ? "rgba(31, 111, 120, 0.5)"
+                          : "linear-gradient(135deg, #1f6f78 0%, #49a3a6 100%)",
+                        color: "#ffffff",
+                        boxShadow: editLoading ? "none" : "0 4px 15px rgba(31, 111, 120, 0.4)",
+                        opacity: editLoading ? 0.6 : 1,
+                      }}
+                      disabled={editLoading}
+                    >
+                      {editLoading ? "Updating..." : "Update Machine"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMachine(null);
+                        setEditError("");
+                        setShowDeleteConfirm(false);
+                      }}
+                      style={{
+                        padding: "0.75rem 1.5rem",
+                        borderRadius: "8px",
+                        border: "2px solid #49a3a6",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                        background: "white",
+                        color: "#1f6f78",
+                        boxShadow: "0 4px 15px rgba(73, 163, 166, 0.3)",
+                      }}
+                      disabled={editLoading}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {userRole === "BOTH" && (
+                    <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid rgba(73, 163, 166, 0.3)" }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem 1.5rem",
+                          borderRadius: "8px",
+                          border: "2px solid #f44336",
+                          fontSize: "1rem",
+                          fontWeight: "600",
+                          cursor: editLoading ? "not-allowed" : "pointer",
+                          transition: "all 0.3s ease",
+                          background: "white",
+                          color: "#d32f2f",
+                          boxShadow: "0 4px 15px rgba(244, 67, 54, 0.3)",
+                        }}
+                        disabled={editLoading}
+                        onMouseEnter={(e) => {
+                          if (!editLoading) {
+                            e.currentTarget.style.background = "rgba(244, 67, 54, 0.1)";
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "white";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }}
+                      >
+                        🗑️ Delete Machine
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </form>
           </div>
         </div>
@@ -1488,7 +1807,7 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
 
               <div>
                 <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#08182b", fontSize: "0.9rem" }}>
-                  Price per Day (DKK) *
+                  Price per Hour (DKK) *
                 </label>
                 <input
                   style={{
@@ -1589,6 +1908,29 @@ export default function ProviderPage({ token, userEmail, onLogout, onNavigateToL
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* My Details Modal */}
+      {showMyDetails && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1000,
+        }}>
+          <MyDetails
+            token={token}
+            onAccountDeleted={() => {
+              setShowMyDetails(false);
+              if (onLogout) {
+                onLogout();
+              }
+            }}
+            onClose={() => setShowMyDetails(false)}
+          />
         </div>
       )}
     </div>

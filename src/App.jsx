@@ -102,7 +102,7 @@ function App() {
       setUserRole(role);
       setCurrentPage(pageForRole(role));
     } else if (userRole) {
-      // Hvis vi ikke kan hente rollem, brug den vi har i forvejen
+      // If we can't fetch the role, use the one we already have
       console.warn("Unable to resolve user role from backend, using cached role");
       setCurrentPage(pageForRole(userRole));
     } else {

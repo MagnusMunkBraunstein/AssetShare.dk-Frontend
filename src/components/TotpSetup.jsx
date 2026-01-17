@@ -9,7 +9,7 @@ export default function TotpSetup({ token }) {
   const [status, setStatus] = useState("idle"); // idle | setup | enabled | error
   const [error, setError] = useState("");
 
-  // Tjek på backend om TOTP allerede er slået til (f.eks. hvis rolle ændres efter opsætning)
+  // Check on backend if TOTP is already enabled (e.g., if role changes after setup)
   useEffect(() => {
     if (!token) return;
 
@@ -28,7 +28,7 @@ export default function TotpSetup({ token }) {
           setStatus("enabled");
         }
       } catch {
-        // Ignorér fejl her – vi vil bare ikke crashe UI'et
+        // Ignore errors here – we just don't want to crash the UI
       }
     }
 
@@ -39,7 +39,7 @@ export default function TotpSetup({ token }) {
     return null;
   }
 
-  // Når 2-faktor er sat op, skal boksen være væk
+  // When 2-factor is set up, hide the box
   if (status === "enabled") {
     return null;
   }
@@ -55,7 +55,7 @@ export default function TotpSetup({ token }) {
       });
       if (!res.ok) {
         const text = await res.text();
-        setError(text || "Kunne ikke starte 2-faktor opsætning.");
+        setError(text || "Could not start 2-factor setup.");
         return;
       }
       const data = await res.json();
@@ -63,7 +63,7 @@ export default function TotpSetup({ token }) {
       setOtpauthUrl(data.otpauthUrl);
       setStatus("setup");
     } catch (err) {
-      setError("Fejl under opsætning: " + err.message);
+      setError("Error during setup: " + err.message);
     }
   }
 
@@ -81,12 +81,12 @@ export default function TotpSetup({ token }) {
       });
       if (!res.ok) {
         const text = await res.text();
-        setError(text || "Koden var ikke korrekt. Prøv igen.");
+        setError(text || "The code was incorrect. Please try again.");
         return;
       }
       setStatus("enabled");
     } catch (err) {
-      setError("Fejl ved aktivering: " + err.message);
+      setError("Error during activation: " + err.message);
     }
   }
 
@@ -144,25 +144,25 @@ export default function TotpSetup({ token }) {
         }}
       >
         {status === "idle"
-          ? "Opsæt Google Authenticator for at komme i gang"
-          : "Google Authenticator (påkrævet)"}
+          ? "Setup Google Authenticator to Get Started"
+          : "Google Authenticator (Required)"}
       </h3>
       <p style={infoStyle}>
-        For at kunne lave og godkende bookinger, skal du aktivere 2-faktor login via Google
+        To create and approve bookings, you must enable 2-factor authentication via Google
         Authenticator.
       </p>
 
       {status === "idle" && (
         <button style={buttonStyle} onClick={startSetup}>
-          Start opsætning
+          Start Setup
         </button>
       )}
 
       {status === "setup" && (
         <div style={{ marginTop: "0.75rem" }}>
           <p style={infoStyle}>
-            1. Åbn Google Authenticator på din telefon.<br />
-            2. Scan denne QR-kode, eller indtast den hemmelige nøgle manuelt.
+            1. Open Google Authenticator on your phone.<br />
+            2. Scan this QR code, or enter the secret key manually.
           </p>
 
           {otpauthUrl && (
@@ -183,7 +183,7 @@ export default function TotpSetup({ token }) {
           )}
 
           <p style={infoStyle}>
-            Hemmelig nøgle (til manuel indtastning hvis QR ikke virker):
+            Secret key (for manual entry if QR doesn't work):
           </p>
           <p
             style={{
@@ -199,7 +199,7 @@ export default function TotpSetup({ token }) {
           </p>
           <form onSubmit={enableTotp} style={{ marginTop: "0.75rem" }}>
             <label style={{ fontSize: "0.9rem", fontWeight: 600, color: "#08182b" }}>
-              Indtast 6-cifret kode fra Google Authenticator
+              Enter 6-digit code from Google Authenticator
             </label>
             <input
               type="text"
@@ -214,7 +214,7 @@ export default function TotpSetup({ token }) {
             />
             <div style={{ marginTop: "0.75rem" }}>
               <button type="submit" style={buttonStyle}>
-                Aktivér 2-faktor
+                Enable 2-Factor
               </button>
             </div>
           </form>
@@ -223,8 +223,8 @@ export default function TotpSetup({ token }) {
 
       {status === "enabled" && (
         <p style={{ ...infoStyle, marginTop: "0.75rem", color: "#155724" }}>
-          ✅ 2-faktor login er aktiveret. Du skal nu bruge Google Authenticator, når du booker og
-          godkender bookinger.
+          ✅ 2-factor authentication is enabled. You must now use Google Authenticator when booking and
+          approving bookings.
         </p>
       )}
 

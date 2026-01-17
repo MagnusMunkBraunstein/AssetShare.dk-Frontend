@@ -213,7 +213,7 @@ export default function AddMachine({ token, onMachineAdded }) {
         </div>
 
         <div>
-          <label style={labelStyle}>Price per Day (DKK) *</label>
+          <label style={labelStyle}>Price per Hour (DKK) *</label>
           <input
             style={inputStyle}
             type="number"

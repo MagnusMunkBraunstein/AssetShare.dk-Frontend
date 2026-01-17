@@ -3,13 +3,18 @@ import MachineSearch from "../components/MachineSearch";
 import RentalProviderRegistration from "../components/RentalProviderRegistration";
 import TenantBookings from "../components/TenantBookings";
 import TotpSetup from "../components/TotpSetup";
+import StarRating from "../components/StarRating";
+import MyDetails from "../components/MyDetails";
 
 const API_BASE = "http://localhost:8080/api";
 
 export default function RenterPage({ token, userEmail, onLogout, onNavigateToLanding, onSwitchToProvider }) {
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState(null);
+  const [userRating, setUserRating] = useState(null);
+  const [userRatingCount, setUserRatingCount] = useState(null);
   const [showProviderForm, setShowProviderForm] = useState(false);
+  const [showMyDetails, setShowMyDetails] = useState(false);
 
   useEffect(() => {
     async function loadCurrentUserName() {
@@ -32,8 +37,19 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
           if (currentUser) {
             setUserName(currentUser.name);
             setUserRole(currentUser.role);
+            // Convert rating to number if it's a string, preserve null if not present
+            const rating = currentUser.averageRating != null && currentUser.averageRating !== undefined 
+              ? (typeof currentUser.averageRating === 'string' ? parseFloat(currentUser.averageRating) : Number(currentUser.averageRating))
+              : null;
+            const count = currentUser.ratingCount != null && currentUser.ratingCount !== undefined
+              ? (typeof currentUser.ratingCount === 'string' ? parseInt(currentUser.ratingCount) : Number(currentUser.ratingCount))
+              : null;
+            setUserRating(rating);
+            setUserRatingCount(count);
           } else {
             setUserRole(null);
+            setUserRating(null);
+            setUserRatingCount(null);
           }
         }
       } catch (err) {
@@ -132,9 +148,16 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
         <div style={headerCardStyle}>
           <div>
             <h1 style={{ fontSize: "1.75rem", color: "#08182b", margin: 0 }}>Renter Dashboard</h1>
-            <p style={{ margin: "0.5rem 0 0 0", color: "#124e66" }}>
+            <p style={{ margin: "0.5rem 0 0 0", color: "#124e66", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
               Logged in as <strong>{userName || userEmail}</strong>
-              {userRole && <span style={roleBadgeStyle}>{userRole}</span>}
+              {userRole && userRole !== "ADMIN" && <span style={roleBadgeStyle}>{userRole}</span>}
+              {userRole && userRole !== "ADMIN" && (
+                userRating !== null && userRating !== undefined && !isNaN(userRating) ? (
+                  <StarRating rating={userRating} count={userRatingCount} size="0.9rem" />
+                ) : (
+                  <span style={{ fontSize: "0.9rem", color: "#999", fontStyle: "italic" }}>No rating received</span>
+                )
+              )}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -152,6 +175,22 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
             >
               Home
             </button>
+            {userRole && userRole !== "ADMIN" && (
+              <button
+                onClick={() => setShowMyDetails(true)}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  borderRadius: "8px",
+                  border: "2px solid #49a3a6",
+                  background: "white",
+                  color: "#1f6f78",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                My Details
+              </button>
+            )}
             <button
               onClick={onLogout}
               style={{
@@ -215,9 +254,32 @@ export default function RenterPage({ token, userEmail, onLogout, onNavigateToLan
         )}
 
         <div style={cardStyle}>
-          <TenantBookings token={token} />
+          <TenantBookings token={token} userRole={userRole} />
         </div>
       </div>
+
+      {/* My Details Modal */}
+      {showMyDetails && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1000,
+        }}>
+          <MyDetails
+            token={token}
+            onAccountDeleted={() => {
+              setShowMyDetails(false);
+              if (onLogout) {
+                onLogout();
+              }
+            }}
+            onClose={() => setShowMyDetails(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

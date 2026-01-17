@@ -113,7 +113,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
         console.error("Booking request failed:", res.status, text);
         
         if (res.status === 403 && text.includes("Two-factor")) {
-          setError("Du skal have aktiveret Google Authenticator og indtaste en gyldig kode for at kunne booke.");
+          setError("You must have Google Authenticator enabled and enter a valid code to make a booking.");
         } else if (res.status === 403) {
           setError("Access denied. Your session may have expired. Please try logging out and logging back in.");
         } else if (res.status === 400 && text.includes("Stripe account")) {
@@ -432,7 +432,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
           </div>
           <div style={{ fontSize: "0.9rem", color: "#124e66" }}>
             {machine.location && `📍 ${machine.location}`}
-            {machine.price && ` • 💰 $${machine.price.toFixed(2)}/hour`}
+            {machine.price && ` • 💰 DKK ${machine.price.toFixed(2)}/hour`}
           </div>
           {machine.instantBookingEnabled && (
             <div style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#1f6f78", fontWeight: "600" }}>
@@ -467,7 +467,7 @@ export default function BookingRequest({ machine, token, onClose, onBookingSucce
           </div>
 
           <div>
-            <label style={labelStyle}>Google Authenticator kode (6 cifre)</label>
+            <label style={labelStyle}>Google Authenticator Code (6 digits)</label>
             <input
               type="text"
               value={totpCode}

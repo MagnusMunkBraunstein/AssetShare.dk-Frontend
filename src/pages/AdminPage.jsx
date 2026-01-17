@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import StarRating from "../components/StarRating";
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -364,7 +365,6 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
 
   const roleCounts = {
     LEJER: users.filter(u => u.role === "LEJER").length,
-    UDLEJER: users.filter(u => u.role === "UDLEJER").length,
     BOTH: users.filter(u => u.role === "BOTH").length,
     ADMIN: users.filter(u => u.role === "ADMIN").length,
   };
@@ -428,10 +428,6 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
           <div style={statCardStyle}>
             <div style={statValueStyle}>{roleCounts.LEJER}</div>
             <div style={statLabelStyle}>Renters (LEJER)</div>
-          </div>
-          <div style={statCardStyle}>
-            <div style={statValueStyle}>{roleCounts.UDLEJER}</div>
-            <div style={statLabelStyle}>Providers (UDLEJER)</div>
           </div>
           <div style={statCardStyle}>
             <div style={statValueStyle}>{roleCounts.BOTH}</div>
@@ -515,6 +511,16 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
                       <span style={infoLabelStyle}>🆔 ID:</span>
                       {user.id}
                     </div>
+                    {user.role !== "ADMIN" && (
+                      <div style={infoItemStyle}>
+                        <span style={infoLabelStyle}>⭐ Rating:</span>
+                        {user.averageRating !== null && user.averageRating !== undefined ? (
+                          <StarRating rating={user.averageRating} count={user.ratingCount} size="0.9rem" />
+                        ) : (
+                          <span style={{ color: "#999", fontStyle: "italic" }}>No rating received</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -576,6 +582,18 @@ export default function AdminPage({ token, userEmail, onLogout, onNavigateToLand
                   </span>
                 </div>
               </div>
+              {selectedUser.role !== "ADMIN" && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <div style={infoLabelStyle}>Rating:</div>
+                  <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    {selectedUser.averageRating !== null && selectedUser.averageRating !== undefined ? (
+                      <StarRating rating={selectedUser.averageRating} count={selectedUser.ratingCount} size="1rem" />
+                    ) : (
+                      <span style={{ color: "#999", fontStyle: "italic" }}>No rating received</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && <div style={errorStyle}>{error}</div>}

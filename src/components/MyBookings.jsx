@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import BookingRatingPrompt from "./BookingRatingPrompt";
 
 const API_BASE = "http://localhost:8080/api";
 
-export default function MyBookings({ token }) {
+export default function MyBookings({ token, userRole }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -174,12 +175,12 @@ export default function MyBookings({ token }) {
 
   const downloadContract = async (booking) => {
     if (!booking.contractId) {
-      setError("Kontrakten er ikke klar endnu for denne booking.");
+      setError("The contract is not ready yet for this booking.");
       return;
     }
 
     if (!token) {
-      setError("Du skal være logget ind for at hente kontrakten.");
+      setError("You must be logged in to download the contract.");
       return;
     }
 
@@ -196,7 +197,7 @@ export default function MyBookings({ token }) {
       if (!res.ok) {
         const text = await res.text();
         console.error("Failed to download contract PDF:", res.status, text);
-        setError("Kunne ikke hente kontrakten. Prøv igen, eller kontakt support.");
+        setError("Could not download the contract. Please try again, or contact support.");
         return;
       }
 
@@ -204,14 +205,14 @@ export default function MyBookings({ token }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `kontrakt-${booking.id}.pdf`;
+      a.download = `contract-${booking.id}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Error downloading contract PDF:", err);
-      setError("Der skete en fejl under hentning af kontrakten.");
+      setError("An error occurred while downloading the contract.");
     } finally {
       setDownloadingContractId(null);
     }
@@ -363,7 +364,7 @@ export default function MyBookings({ token }) {
                     {machine && (
                       <div style={{ fontSize: "0.9rem", color: "#124e66", marginBottom: "0.5rem" }}>
                         📍 {machine.location || "N/A"}
-                        {machine.price && ` • 💰 $${machine.price.toFixed(2)}/hour`}
+                        {machine.price && ` • 💰 DKK ${machine.price.toFixed(2)}/hour`}
                       </div>
                     )}
                     
@@ -434,9 +435,20 @@ export default function MyBookings({ token }) {
                         disabled={downloadingContractId === booking.id}
                       >
                         {downloadingContractId === booking.id
-                          ? "Henter kontrakt (udlejer)..."
-                          : "Hent kontrakt som udlejer"}
+                          ? "Downloading contract (provider)..."
+                          : "Download Contract as Provider"}
                       </button>
+                    </div>
+                  )}
+
+                  {booking.status === "COMPLETED" && (
+                    <div style={{ marginTop: "1rem" }}>
+                      <BookingRatingPrompt
+                        bookingId={booking.id}
+                        userRole={userRole || "UDLEJER"}
+                        token={token}
+                        onComplete={() => loadBookings()}
+                      />
                     </div>
                   )}
                 </div>
